@@ -73,7 +73,7 @@ This lab is intentionally aligned with **Exxeta's Support Operations Engineer �
                     └──────┬──────┘
                            │
               ┌────────────▼────────────┐
-              │   spring-support-api    │  Spring Boot application
+              │   spring-support-api    │  Spring Boot 3.5 — ticket API (M1)
               └────────────┬────────────┘
                            │
               ┌────────────▼────────────┐
@@ -122,24 +122,24 @@ See [docs/architecture-overview.md](docs/architecture-overview.md) for detail.
 
 ## Local setup
 
-> **Milestone 0:** Repository foundation only. Application and Docker services are not yet implemented.
+> **Milestone 1:** Validate the API with `mvn test`. Full application runtime with PostgreSQL arrives in Milestone 2 (Docker Compose).
 
-**Prerequisites (for upcoming milestones):**
+**Prerequisites (Milestone 1):** Java 21, Maven 3.9+, Git
 
-- Docker and Docker Compose
-- Java 17+ and Maven (or Gradle)
-- `kubectl` (optional, for Kubernetes scenarios)
-- Git
-
-**Current state:**
+**Milestone 1 validation command:**
 
 ```bash
-git clone <repository-url>
-cd managed-services-operations-lab
-# Application and docker compose services — coming in Milestone 1+
+cd app/spring-support-api
+mvn test
 ```
 
-See [docs/local-setup-guide.md](docs/local-setup-guide.md) for the full setup walkthrough as milestones progress.
+`mvn test` uses H2 in PostgreSQL compatibility mode (`application-test.properties`). It does **not** require Docker or PostgreSQL.
+
+**Manual application runtime (not required for Milestone 1):**
+
+`mvn spring-boot:run` connects to PostgreSQL at `localhost:5432/supportdb` (default credentials in `application.properties`). You must supply your own PostgreSQL instance. Milestone 2 adds Docker Compose so the database and API run together without manual setup.
+
+See [docs/local-setup-guide.md](docs/local-setup-guide.md) for details.
 
 ---
 
@@ -191,14 +191,14 @@ Example incident records: [incidents/](incidents/)
 
 | Milestone | Scope | Status |
 |---|---|---|
-| **M0** | Repository foundation, README, documentation and record skeletons | **Current** |
-| M1 | Spring Boot API, PostgreSQL, Docker Compose local stack | Planned |
-| M2 | Monitoring stack (Prometheus, Grafana, Alertmanager) | Planned |
-| M3 | Nginx reverse proxy, health checks, realistic failure injection | Planned |
-| M4 | Incident simulations with working troubleshooting paths | Planned |
-| M5 | Kubernetes manifests, deployment and rollback scenarios | Planned |
-| M6 | CI/CD workflows, automated validation | Planned |
-| M7 | Service improvement and monitoring hardening | Planned |
+| M0 | Repository foundation, README, documentation and record skeletons | Completed |
+| **M1** | Spring Boot support API, Flyway schema, seeded tickets, tests | **Completed** |
+| M2 | Docker Compose local stack (PostgreSQL) | Planned |
+| M3 | Monitoring stack (Prometheus, Grafana, Alertmanager) | Planned |
+| M4 | Nginx reverse proxy, health checks, realistic failure injection | Planned |
+| M5 | Incident simulations with working troubleshooting paths | Planned |
+| M6 | Kubernetes manifests, deployment and rollback scenarios | Planned |
+| M7 | CI/CD workflows, automated validation | Planned |
 
 ---
 

@@ -14,9 +14,13 @@ Clients → Nginx → spring-support-api → PostgreSQL
 
 ### spring-support-api
 
-- **Role:** Primary application under support
-- **Runtime:** JVM / Spring Boot (Milestone 1+)
-- **Failure domains:** Application errors, memory pressure, misconfiguration, bad deployments
+- **Role:** Primary application under support — customer support ticket API for incident simulation
+- **Location:** `app/spring-support-api/`
+- **Runtime:** Java 21, Spring Boot 3.5.15, Maven
+- **Persistence:** Spring Data JPA + Flyway migrations on PostgreSQL
+- **API surface:** `GET /health`, `GET /tickets`, `GET /tickets/{id}`, `POST /tickets`
+- **Observability hooks:** Spring Actuator, Micrometer Prometheus registry (endpoints ready; scrape config in Milestone 3)
+- **Failure domains:** Application errors, memory pressure, misconfiguration, bad deployments, database connectivity
 
 ### PostgreSQL
 
@@ -41,14 +45,15 @@ Clients → Nginx → spring-support-api → PostgreSQL
 1. Client request hits Nginx on port 443 (or 8080 locally).
 2. Nginx forwards to healthy application instances.
 3. Application executes business logic and queries PostgreSQL.
-4. Application exposes `/actuator/prometheus` for metrics (planned).
-5. Prometheus scrapes metrics; Alertmanager fires on threshold breach.
+4. Application exposes `/health` (operations) and `/actuator/prometheus` (metrics).
+5. Prometheus scrapes metrics; Alertmanager fires on threshold breach (Milestone 3+).
 
 ## Environment model
 
 | Environment | Purpose |
 |---|---|
-| Local (Docker Compose) | Development and incident drill |
+| Local (Maven + PostgreSQL) | API development and testing (Milestone 1) |
+| Local (Docker Compose) | Full stack incident drill (Milestone 2+) |
 | Staging (Kubernetes) | Pre-production validation |
 | Production (Kubernetes) | Customer-facing (simulated) |
 
