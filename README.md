@@ -60,7 +60,7 @@ Clients → Nginx (:18081) → spring-support-api (:8080) → PostgreSQL (:5432)
 | Database | PostgreSQL 16 | Persistence, slow-query scenarios |
 | Proxy | Nginx | Customer entry point, fault isolation |
 | Containers | Docker Compose | Full local stack + monitoring |
-| Orchestration | Kubernetes (kind) | Deploy/rollback pattern (M8) |
+| Orchestration | Kubernetes (kind) | Deploy/rollback pattern |
 | Observability | Prometheus, Grafana, Alertmanager | Alert-driven incident response |
 | CI | GitHub Actions | Tests, image build, manifest validation |
 
@@ -84,33 +84,33 @@ Docker Compose is the **primary environment** (monitoring included). Kubernetes 
 
 ---
 
-## Completed milestones (M0–M10)
+## Monitoring
 
-| Milestone | Scope | Status |
-|---|---|---|
-| M0 | Repository foundation, docs, record skeletons | ✅ |
-| M1 | Spring Boot API, Flyway, tests | ✅ |
-| M2 | Docker Compose: Nginx → API → PostgreSQL | ✅ |
-| M3 | Monitoring: Prometheus, Grafana, exporters | ✅ |
-| M4 | Alert rules, Grafana dashboard, DB health metric | ✅ |
-| M5 | Incident simulations INC-001–003 + drill scripts | ✅ |
-| M6 | SQL troubleshooting: EXPLAIN, index fix, evidence | ✅ |
-| M7 | ITSM documentation: artifact map, process guides | ✅ |
-| M8 | Local Kubernetes (kind): deploy, safe rollback | ✅ |
-| M9 | CI/CD: Java, Docker, kubeconform manifest validation | ✅ |
-| M10 | GitHub/portfolio polish: reviewer guide, resume bullets | ✅ |
+Prometheus scrapes the API, exporters, and evaluates alert rules. Grafana visualizes service health, database connectivity, errors, and resource pressure.
 
----
-
-## Screenshots (add after running locally)
-
-> Place captured screenshots in `docs/screenshots/` and uncomment the links below.
-
-| View | Placeholder |
+| Target | URL |
 |---|---|
-| Grafana — Managed Services Operations Overview | `<!-- ![Grafana dashboard](docs/screenshots/grafana-overview.png) -->` |
-| Prometheus — targets and alerts | `<!-- ![Prometheus targets](docs/screenshots/prometheus-targets.png) -->` |
-| Health endpoint — UP / database UP | `<!-- ![Health check](docs/screenshots/health-up.png) -->` |
+| Prometheus targets | http://localhost:19090/targets |
+| Firing alerts | http://localhost:19090/alerts |
+| Grafana dashboard | http://localhost:13003 — **Managed Services Operations Overview** |
+| App metrics | http://localhost:18080/actuator/prometheus (`support_api_database_up`) |
+
+**Alert rules (summary):**
+
+| Alert | Severity | Trigger |
+|---|---|---|
+| SupportApiDown | critical | Application scrape target down |
+| SupportApiDatabaseDown | critical | `support_api_database_up == 0` |
+| SupportApiHighErrorRate | warning | HTTP 5xx rate > 0 |
+| SupportApiHighCpuUsage | warning | CPU > 80% |
+| ContainerMemoryHigh | warning | API container memory > 500 MB |
+
+```bash
+curl -s http://localhost:19090/-/ready
+curl -s 'http://localhost:19090/api/v1/query?query=support_api_database_up' | jq .
+```
+
+Detail: [docs/monitoring-guide.md](docs/monitoring-guide.md)
 
 ---
 
@@ -131,7 +131,7 @@ Records: [incidents/](incidents/) · [problem-records/](problem-records/) · [ch
 
 ---
 
-## Incident simulation (Milestone 5)
+## Incident simulation
 
 Controlled drills: detect via Prometheus → investigate with runbook → restore → document.
 
@@ -147,7 +147,7 @@ Scripts: [scripts/incidents/](scripts/incidents/) · Records: [INC-001](incident
 
 ---
 
-## SQL troubleshooting (Milestone 6)
+## SQL troubleshooting
 
 Slow ticket history search on ~100k rows — investigate, index, validate with committed evidence.
 
@@ -165,7 +165,7 @@ Related: [PRB-001](problem-records/PRB-001-recurring-database-timeout.md) · [CH
 
 ---
 
-## Local Kubernetes extension (Milestone 8)
+## Local Kubernetes extension
 
 kind cluster for deploy/rollback pattern — **no cloud, no Helm**. Docker Compose remains the monitoring environment.
 
@@ -180,7 +180,7 @@ Guide: [k8s/README.md](k8s/README.md) · Rollback: [runbooks/kubernetes-rollback
 
 ---
 
-## CI/CD validation (Milestone 9)
+## CI/CD validation
 
 Validation gates on every push/PR — no deploy, no registry push, no secrets.
 
@@ -220,7 +220,7 @@ Guided review path: [docs/reviewer-guide.md](docs/reviewer-guide.md) · Resume b
 | [docs/resume-bullets.md](docs/resume-bullets.md) | CV/LinkedIn bullets |
 | [docs/service-overview.md](docs/service-overview.md) | Service context and API |
 | [docs/architecture-overview.md](docs/architecture-overview.md) | Components, data flow, CI/CD |
-| [docs/local-setup-guide.md](docs/local-setup-guide.md) | Setup by milestone |
+| [docs/local-setup-guide.md](docs/local-setup-guide.md) | Local environment setup |
 | [docs/monitoring-guide.md](docs/monitoring-guide.md) | Metrics, dashboards, alerts |
 | [docs/cicd-guide.md](docs/cicd-guide.md) | CI workflows and troubleshooting |
 | [docs/aws-azure-mapping.md](docs/aws-azure-mapping.md) | Cloud mapping for hybrid MS |
