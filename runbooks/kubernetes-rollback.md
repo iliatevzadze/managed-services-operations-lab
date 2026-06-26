@@ -18,11 +18,19 @@
 
 > **Principle:** Rollback first, root-cause second when users are affected.
 
-> **Prerequisite:** Rollback only works once **at least two deployment revisions
-> exist** — i.e. after at least one newer deployment on top of the original.
-> The **first deployment has no previous revision**, so there is nothing to roll
-> back to. The rollback script detects this and exits safely with the message
-> `No previous revision available. Rollback requires at least two deployment revisions.`
+> **Prerequisites & safe exits:** The rollback script
+> ([`scripts/k8s/rollback-support-api.sh`](../scripts/k8s/rollback-support-api.sh))
+> validates the environment before acting and exits safely (code 0) when:
+>
+> - **The cluster is not reachable** (e.g. the kind cluster was deleted) →
+>   `Kubernetes cluster is not reachable. Run scripts/k8s/deploy-kind.sh first.`
+> - **The namespace is missing** →
+>   `Namespace managed-services-lab not found. Run scripts/k8s/deploy-kind.sh first.`
+> - **Only one revision exists** → `No previous revision available. Rollback requires at least two deployment revisions.`
+>
+> Rollback only works once **at least two deployment revisions exist** — i.e.
+> after at least one newer deployment on top of the original. The **first
+> deployment has no previous revision**, so there is nothing to roll back to.
 
 ## 1. Deployment status checks
 

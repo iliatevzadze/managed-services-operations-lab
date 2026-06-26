@@ -92,11 +92,18 @@ the full investigation and rollback procedure.
 
 Reverts `spring-support-api` to the previous revision and waits for the rollout.
 
+The script fails safe (exits 0) in these cases instead of erroring:
+
+- **Cluster not reachable** (e.g. cluster was deleted) →
+  `Kubernetes cluster is not reachable. Run scripts/k8s/deploy-kind.sh first.`
+- **Namespace missing** →
+  `Namespace managed-services-lab not found. Run scripts/k8s/deploy-kind.sh first.`
+- **Only one revision** →
+  `No previous revision available. Rollback requires at least two deployment revisions.`
+
 > **Rollback needs at least two revisions.** It only works after at least one
 > newer deployment exists on top of the original. The **first deployment has no
-> previous revision**, so the script prints
-> `No previous revision available. Rollback requires at least two deployment revisions.`
-> and exits safely (code 0).
+> previous revision**.
 
 To create a second revision to roll back from (for a drill):
 

@@ -11,6 +11,16 @@ DEPLOYMENT="spring-support-api"
 
 command -v kubectl >/dev/null 2>&1 || { echo "[K8S] ERROR: 'kubectl' not found in PATH."; exit 1; }
 
+if ! kubectl cluster-info >/dev/null 2>&1; then
+  echo "[K8S] Kubernetes cluster is not reachable. Run scripts/k8s/deploy-kind.sh first."
+  exit 0
+fi
+
+if ! kubectl get namespace "${NAMESPACE}" >/dev/null 2>&1; then
+  echo "[K8S] Namespace ${NAMESPACE} not found. Run scripts/k8s/deploy-kind.sh first."
+  exit 0
+fi
+
 echo "[K8S] Current rollout history for ${DEPLOYMENT}:"
 kubectl -n "${NAMESPACE}" rollout history deployment/"${DEPLOYMENT}"
 
