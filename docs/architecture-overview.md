@@ -96,6 +96,53 @@ A local monitoring stack provides **proactive customer application visibility**,
 
 **Why this matters for Managed Services:** alert rules detect customer-impacting symptoms early; the dashboard gives 2nd-level support a single view of availability, database health, errors, and resource pressure — the foundation for reliable service operation and runbook-driven response.
 
+## Local Kubernetes extension (Milestone 8)
+
+A **local-only** Kubernetes deployment on [kind](https://kind.sigs.k8s.io/) demonstrates the **deployment and runtime support pattern** — Deployments, Services, ConfigMap/Secret, health probes, and `kubectl rollout` rollback — without any cloud account, paid service, or Helm.
+
+> **Docker Compose remains the full monitoring stack** (Prometheus, Grafana, Alertmanager, exporters). Kubernetes does **not** replace it; it adds a focused view of how the same application is deployed, validated, and rolled back on an orchestrator. Monitoring drills stay on Docker Compose.
+
+```
+                Host (localhost)
+   :18082 ─────────────────────────┐
+                                   ▼
+              ┌──────────────────────────────────────────┐
+              │   kind node (control-plane container)     │
+              │   hostPort 18082 → nodePort 30080         │
+              │                                           │
+              │   namespace: managed-services-lab         │
+              │  ┌─────────────────────────────────────┐  │
+              │  │ Service spring-support-api (NodePort)│  │
+              │  │            :30080 → :8080            │  │
+              │  └──────────────────┬──────────────────┘  │
+              │                     ▼                      │
+              │  ┌─────────────────────────────────────┐  │
+              │  │ Deployment spring-support-api        │  │
+              │  │  msol/spring-support-api:local       │  │
+              │  │  readiness + liveness: GET /health   │  │
+              │  │  env: ConfigMap (URL) + Secret (creds)│ │
+              │  └──────────────────┬──────────────────┘  │
+              │                     │ JDBC (Service DNS)   │
+              │                     ▼                      │
+              │  ┌─────────────────────────────────────┐  │
+              │  │ Service postgres (ClusterIP :5432)   │  │
+              │  │ Deployment postgres postgres:16-alpine│ │
+              │  │  storage: emptyDir (EPHEMERAL)        │ │
+              │  └─────────────────────────────────────┘  │
+              └──────────────────────────────────────────┘
+```
+
+**Key design choices (Managed Services relevance):**
+
+- **Locally built image, loaded into kind** (`imagePullPolicy: IfNotPresent`) — no registry needed; reviewers run one script.
+- **ConfigMap vs. Secret split** — `SPRING_DATASOURCE_URL` is config; credentials are in a Secret, mirroring real environment separation.
+- **Health probes** — readiness gates traffic until the app + database are up; liveness restarts a wedged pod, the same `/health` contract used in Docker Compose.
+- **NodePort + kind port map** — deterministic host access (`localhost:18082`) without `kubectl port-forward`.
+- **emptyDir storage** — intentionally **ephemeral** for a disposable lab; **not production persistence**. Production would use a PVC/StorageClass or managed database. Docker Compose holds the persistent local data.
+- **Rollback-first** — `kubectl rollout undo` plus [kubernetes-rollback runbook](../runbooks/kubernetes-rollback.md) demonstrate safe recovery from a bad release.
+
+Manifests: [`k8s/base/`](../k8s/) · Cluster config: [`k8s/kind/cluster-config.yaml`](../k8s/kind/cluster-config.yaml) · Scripts: [`scripts/k8s/`](../scripts/k8s/) · Guide: [`k8s/README.md`](../k8s/README.md)
+
 ## Components
 
 ### spring-support-api

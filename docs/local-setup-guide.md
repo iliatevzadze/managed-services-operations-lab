@@ -12,7 +12,8 @@
 | **M5** | Controlled incident simulations and drill scripts | Completed |
 | **M6** | SQL troubleshooting: EXPLAIN ANALYZE, index evidence | **Completed** |
 | **M7** | ITSM documentation: process guides, artifact map | **Completed** |
-| M8+ | Kubernetes, CI/CD | Planned |
+| **M8** | Local Kubernetes extension (kind): deploy, validate, rollback | **Completed** |
+| M9 | CI/CD workflows, automated validation | Planned |
 
 ## Prerequisites
 
@@ -26,7 +27,11 @@
 - **Java 21**
 - **Maven 3.9+**
 
-**Later milestones:** `kubectl` (optional)
+**Milestone 8 (local Kubernetes extension):**
+
+- **Docker** (running)
+- **[kind](https://kind.sigs.k8s.io/docs/user/quick-start/#installation)**
+- **kubectl**
 
 ## Milestone 1 — validate the API
 
@@ -235,6 +240,36 @@ docker compose exec -T postgres psql -U supportuser -d supportdb \
 - [ ] Execution time improved in after vs before
 - [ ] PRB-001 and CHG-001 reference evidence paths
 
+## Milestone 8 — local Kubernetes extension (kind)
+
+Local-only Kubernetes deployment of the API. Docker Compose remains the main monitoring environment; this is a focused deployment/rollback extension.
+
+```bash
+# Build image, create kind cluster 'msol', load image, apply manifests, wait for rollout
+./scripts/k8s/deploy-kind.sh
+
+# Verify (via kind port mapping localhost:18082 -> NodePort 30080)
+curl -s http://localhost:18082/health
+curl -s http://localhost:18082/tickets
+kubectl -n managed-services-lab get pods,svc
+
+# Safe rollback to previous revision
+./scripts/k8s/rollback-support-api.sh
+
+# Delete the cluster
+./scripts/k8s/delete-kind.sh
+```
+
+Full guide and troubleshooting commands: [../k8s/README.md](../k8s/README.md). Rollback procedure: [../runbooks/kubernetes-rollback.md](../runbooks/kubernetes-rollback.md).
+
+## Verification checklist (M8)
+
+- [ ] `deploy-kind.sh` completes; both deployments reach `rollout status` ready
+- [ ] `curl http://localhost:18082/health` returns `status: UP`, `database: UP`
+- [ ] `curl http://localhost:18082/tickets` returns seeded tickets
+- [ ] `rollback-support-api.sh` reverts and re-validates health
+- [ ] `delete-kind.sh` removes the cluster (and is safe when absent)
+
 ## Verification checklist (M1, no Docker)
 
 - [ ] `mvn test` passes without Docker or PostgreSQL
@@ -252,6 +287,9 @@ docker compose exec -T postgres psql -U supportuser -d supportdb \
 | Monitoring port in use | `ss -tlnp \| grep -E '19090\|13003\|19093\|19100\|18084'` — stop the conflicting process |
 | Prometheus target DOWN | `docker compose logs prometheus`; confirm the target container is healthy and on `msol-net` |
 | Stale data after schema change | `docker compose down -v` to reset the volume, then `up -d --build` |
+| kind: `ImagePullBackOff` on API pod | Image not loaded; rerun `kind load docker-image msol/spring-support-api:local --name msol` |
+| kind: pod not ready | `kubectl -n managed-services-lab describe pod -l app=spring-support-api`; check probe/events |
+| kind: port 18082 in use | `ss -tlnp \| grep 18082` — stop the conflicting process before deploy |
 
 ## Related documents
 

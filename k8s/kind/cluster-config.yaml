@@ -1,0 +1,17 @@
+# Managed Services Operations Lab — kind cluster config (Milestone 8)
+# Local-only single-node cluster. The cluster name is passed by the deploy
+# script (--name msol), not set here, to keep this file reusable.
+#
+# Port mapping: host localhost:18082 -> node port 30080 -> NodePort Service.
+# This lets a reviewer reach the API without kubectl port-forward:
+#   http://localhost:18082/health
+#   http://localhost:18082/tickets
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+nodes:
+  - role: control-plane
+    extraPortMappings:
+      - containerPort: 30080
+        hostPort: 18082
+        listenAddress: "127.0.0.1"
+        protocol: TCP

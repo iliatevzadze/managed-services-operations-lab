@@ -1,0 +1,9 @@
+# Non-secret application configuration for the Spring Boot API.
+# JDBC URL uses the in-cluster Service DNS name "postgres".
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: support-api-configmap
+  namespace: managed-services-lab
+data:
+  SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/supportdb

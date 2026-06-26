@@ -1,0 +1,60 @@
+# Spring Boot support API for the local Kubernetes lab.
+# Image is built locally and loaded into kind (see scripts/k8s/deploy-kind.sh),
+# so imagePullPolicy is IfNotPresent to avoid a registry pull.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spring-support-api
+  namespace: managed-services-lab
+  labels:
+    app: spring-support-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: spring-support-api
+  template:
+    metadata:
+      labels:
+        app: spring-support-api
+    spec:
+      containers:
+        - name: spring-support-api
+          image: msol/spring-support-api:local
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          env:
+            - name: SPRING_DATASOURCE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: support-api-configmap
+                  key: SPRING_DATASOURCE_URL
+            - name: SPRING_DATASOURCE_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: SPRING_DATASOURCE_USERNAME
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: SPRING_DATASOURCE_PASSWORD
+            - name: SUPPORT_SIMULATION_ENABLED
+              value: "true"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 6
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 45
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 5

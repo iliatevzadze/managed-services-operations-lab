@@ -86,7 +86,7 @@ This lab is intentionally aligned with **Exxeta's Support Operations Engineer �
    └──────────────────────────────────────────────────┘
 ```
 
-Local lab runs via Docker Compose. Kubernetes manifests support staging/production-style scenarios in later milestones.
+Local lab runs via Docker Compose (full monitoring stack). A local Kubernetes extension on kind ([k8s/](k8s/), Milestone 8) demonstrates the deployment and safe-rollback support pattern.
 
 See [docs/architecture-overview.md](docs/architecture-overview.md) for detail.
 
@@ -199,6 +199,39 @@ See [docs/local-setup-guide.md](docs/local-setup-guide.md) for details.
 
 ---
 
+## Local Kubernetes extension (Milestone 8)
+
+A **local-only** Kubernetes deployment on [kind](https://kind.sigs.k8s.io/) demonstrates the deployment, validation, and **safe rollback** pattern a 2nd-level engineer uses on a Kubernetes platform — no cloud account, no paid services, no Helm. **Docker Compose remains the main environment** for the full monitoring stack; Kubernetes is a focused deployment/runtime extension.
+
+**Prerequisites:** Docker, [kind](https://kind.sigs.k8s.io/docs/user/quick-start/#installation), kubectl
+
+```bash
+# Build image, create kind cluster 'msol', load image, apply manifests, wait for rollout
+./scripts/k8s/deploy-kind.sh
+
+# Verify
+curl -s http://localhost:18082/health
+curl -s http://localhost:18082/tickets
+kubectl -n managed-services-lab get pods,svc
+
+# Safe rollback to the previous revision
+./scripts/k8s/rollback-support-api.sh
+
+# Tear down the cluster
+./scripts/k8s/delete-kind.sh
+```
+
+**URLs (via kind port mapping `localhost:18082` → NodePort `30080`):**
+
+| Target | URL |
+|---|---|
+| Health | http://localhost:18082/health |
+| Tickets | http://localhost:18082/tickets |
+
+Storage uses an `emptyDir` volume (ephemeral) — intentional for a disposable lab, **not production persistence**. Details: [k8s/README.md](k8s/README.md) · Rollback runbook: [runbooks/kubernetes-rollback.md](runbooks/kubernetes-rollback.md)
+
+---
+
 ## Simulated incidents (Milestone 5)
 
 Controlled drills demonstrate **alert-driven 2nd-level incident response**: detect via Prometheus, investigate with runbooks, restore safely, document in incident records.
@@ -286,6 +319,7 @@ Complete ITSM-style process documentation for incident, problem, and change mana
 | [docs/backup-restore-guide.md](docs/backup-restore-guide.md) | Backup strategy and restore procedure |
 | [docs/service-improvement-plan.md](docs/service-improvement-plan.md) | Continuous improvement backlog |
 | [docs/aws-azure-mapping.md](docs/aws-azure-mapping.md) | Cloud service mapping for hybrid MS context |
+| [k8s/README.md](k8s/README.md) | Local Kubernetes extension (kind): deploy, validate, rollback |
 
 **Runbooks:** [runbooks/](runbooks/) — Operational procedures for common incidents.
 
@@ -309,7 +343,7 @@ Complete ITSM-style process documentation for incident, problem, and change mana
 | **M5** | Controlled incident simulations, drill scripts, documented INC-001–003 | Completed |
 | **M6** | SQL troubleshooting: EXPLAIN ANALYZE, index fix, evidence files | **Completed** |
 | **M7** | ITSM documentation: artifact map, process guides, SLA/escalation | **Completed** |
-| M8 | Kubernetes manifests, deployment and rollback scenarios | Planned |
+| **M8** | Local Kubernetes extension (kind): deploy, validate, safe rollback | **Completed** |
 | M9 | CI/CD workflows, automated validation | Planned |
 
 ---

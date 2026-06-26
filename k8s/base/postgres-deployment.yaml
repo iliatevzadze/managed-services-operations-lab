@@ -1,0 +1,60 @@
+# PostgreSQL for the local Kubernetes lab.
+#
+# IMPORTANT: storage uses emptyDir — data is LOST when the pod is deleted or
+# rescheduled. This is intentional for a disposable local lab and is NOT
+# production persistence. Production would use a PersistentVolumeClaim backed
+# by a StorageClass (or a managed database). Docker Compose remains the
+# stateful local environment via the msol-postgres-data volume.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+  namespace: managed-services-lab
+  labels:
+    app: postgres
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:16-alpine
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_DB
+              value: supportdb
+            - name: POSTGRES_USER
+              value: supportuser
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: POSTGRES_PASSWORD
+          volumeMounts:
+            - name: postgres-data
+              mountPath: /var/lib/postgresql/data
+          readinessProbe:
+            exec:
+              command: ["pg_isready", "-U", "supportuser", "-d", "supportdb"]
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 5
+          livenessProbe:
+            exec:
+              command: ["pg_isready", "-U", "supportuser", "-d", "supportdb"]
+            initialDelaySeconds: 15
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 5
+      volumes:
+        # emptyDir = ephemeral local-lab storage, not production persistence.
+        - name: postgres-data
+          emptyDir: {}

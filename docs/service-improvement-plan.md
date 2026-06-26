@@ -15,7 +15,8 @@ Proactive items that reduce incident volume, tighten detection, and raise operat
 | **SQL index improvement** | SI-001 — composite index validated (PRB-001, CHG-001, M6) | **Done (lab)** |
 | **Backup validation** | SI-005 — automated backup verification | Backlog |
 | **Incident script hardening** | SI-008 env checklist, SI-009 disable simulation in prod, SI-010 alert drill cadence | **Added (M5)** |
-| **Future CI/CD health gates** | Pre-deploy smoke tests, datasource validation (SI-011), staging soak before promote | Planned (M8) |
+| **Safe deployment & rollback** | SI-014 kubectl rollback runbook + script; SI-015 local kind rehearsal environment (M8) | **Added (M8)** |
+| **Future CI/CD health gates** | Pre-deploy smoke tests, datasource validation (SI-011), staging soak before promote | Planned (M9) |
 
 Supporting detail in the table below.
 
@@ -36,6 +37,9 @@ Supporting detail in the table below.
 | SI-011 | Pre-deploy datasource validation in staging | INC-003, PRB-002 | High | **Added (M5)** |
 | SI-012 | Quarterly EXPLAIN ANALYZE review for top queries | PRB-001, M6 | High | **Added (M6)** |
 | SI-013 | Commit before/after SQL evidence for index changes | CHG-001, M6 | Medium | **Added (M6)** |
+| SI-014 | Kubernetes rollback runbook + script for failed deployments | CHG-003, PRB-002, M8 | High | **Added (M8)** |
+| SI-015 | Local kind environment for deployment/rollback rehearsal | failed-deployment, M8 | Medium | **Added (M8)** |
+| SI-016 | Replace emptyDir with PVC when persistence is in scope | M8 storage note | Low | Backlog |
 
 ## Lessons from Milestone 6 SQL investigation
 

@@ -1,0 +1,20 @@
+# NodePort exposes the API on node port 30080, which the kind config maps to
+# host localhost:18082. Reviewers can reach:
+#   http://localhost:18082/health
+#   http://localhost:18082/tickets
+apiVersion: v1
+kind: Service
+metadata:
+  name: spring-support-api
+  namespace: managed-services-lab
+  labels:
+    app: spring-support-api
+spec:
+  type: NodePort
+  selector:
+    app: spring-support-api
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+      nodePort: 30080

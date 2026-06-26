@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: managed-services-lab
+  labels:
+    app.kubernetes.io/part-of: managed-services-operations-lab
+    environment: local-lab
