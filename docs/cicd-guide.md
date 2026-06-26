@@ -68,7 +68,7 @@ shell-script syntax checks (`bash -n`), and — if `kubectl` is installed — th
 Kubernetes manifest dry-run. If `kubectl` is missing it prints a skip note and
 continues.
 
-## How this maps to Managed Services / Exxeta
+## How this maps to Managed Services operations
 
 | CI gate | Managed Services value |
 |---|---|

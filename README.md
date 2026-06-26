@@ -1,4 +1,4 @@
-# Managed Services Operations Lab — Exxeta-Focused 2nd Level Support Simulation
+# Managed Services Operations Lab
 
 [![Java CI](https://github.com/iliatevzadze/managed-services-operations-lab/actions/workflows/java-ci.yml/badge.svg)](https://github.com/iliatevzadze/managed-services-operations-lab/actions/workflows/java-ci.yml)
 [![Docker Compose CI](https://github.com/iliatevzadze/managed-services-operations-lab/actions/workflows/docker-compose-ci.yml/badge.svg)](https://github.com/iliatevzadze/managed-services-operations-lab/actions/workflows/docker-compose-ci.yml)
@@ -6,26 +6,24 @@
 
 > Replace `USERNAME` in the badge URLs with your GitHub username/org after pushing.
 
-A **local portfolio lab** that demonstrates 2nd-level **Managed Services support operations**: monitoring-driven incident response, PostgreSQL troubleshooting with evidence, ITSM documentation (incidents, problems, changes), Kubernetes deploy/rollback basics, and CI/CD validation — all runnable on a laptop without cloud accounts or paid services. Built to show hiring managers I can operate a production-like customer platform with discipline, traceability, and customer-impact awareness.
+A local portfolio lab demonstrating my ability to operate and troubleshoot a production-like Managed Services environment. The project covers containerized application support, PostgreSQL troubleshooting, monitoring with Prometheus/Grafana, incident/problem/change management, Kubernetes deployment basics and CI/CD validation — all runnable locally without cloud accounts or paid services.
 
 **New reviewer?** Start with [docs/reviewer-guide.md](docs/reviewer-guide.md) (~10 minutes).
 
 ---
 
-## Exxeta positioning
+## Managed Services capabilities demonstrated
 
-Aligned with **Exxeta's Support Operations Engineer — Managed Services** role (Tbilisi, Hybrid). This is not a generic DevOps demo — it mirrors how a 2nd-level engineer keeps a contracted customer platform stable under SLA pressure.
-
-| Role expectation | Evidence in this repo |
+| Capability | Evidence in this repo |
 |---|---|
-| 2nd-level incident handling | INC-001–003 drills, runbooks, timestamped investigation steps |
-| Monitoring and alerting | Prometheus rules, Grafana dashboard, `support_api_database_up` metric |
-| Linux / container operations | Docker Compose stack, restart and deployment runbooks |
-| SQL / database troubleshooting | EXPLAIN ANALYZE workflow, index fix, before/after evidence |
-| Kubernetes familiarity | kind manifests, deploy/rollback scripts, health probes |
-| ITIL-aligned operations | [ITSM artifact map](docs/itsm-artifact-map.md), process guides (M7) |
-| Change discipline | CHG-001–005 with rollback and validation plans |
-| CI validation | GitHub Actions + [local CI script](scripts/ci/local-ci-check.sh) |
+| Application support | Spring Boot support API, health checks, logs |
+| Database troubleshooting | PostgreSQL, EXPLAIN ANALYZE, index improvement |
+| Monitoring | Prometheus, Grafana, Alertmanager, custom metrics |
+| Incident response | Controlled outage / 500 / restart-loop drills |
+| ITSM process | Incident, problem, change records, SLA matrix, runbooks |
+| Containers | Docker Compose, Nginx, PostgreSQL, API container |
+| Kubernetes basics | kind deployment, probes, rollback script |
+| CI/CD validation | GitHub Actions, Maven tests, Docker build, kubeconform |
 
 ---
 
@@ -232,7 +230,7 @@ Guided walkthrough: [docs/reviewer-guide.md](docs/reviewer-guide.md) · Resume b
 
 ## Resume positioning
 
-**Title:** Managed Services Operations Lab — 2nd Level Support Simulation
+**Title:** Managed Services Operations Lab
 
 **Bullets:** [docs/resume-bullets.md](docs/resume-bullets.md)
 
@@ -246,4 +244,4 @@ Guided walkthrough: [docs/reviewer-guide.md](docs/reviewer-guide.md) · Resume b
 
 ---
 
-*Portfolio learning project. Not affiliated with or endorsed by Exxeta.*
+*Portfolio learning project.*

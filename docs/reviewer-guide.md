@@ -1,6 +1,6 @@
 # Reviewer Guide — 10-Minute Walkthrough
 
-A fast path for hiring managers and technical reviewers evaluating this portfolio for a **2nd-level Managed Services Support Operations Engineer** role (Exxeta-focused).
+A fast path for hiring managers and technical reviewers evaluating this portfolio for **Managed Services / Support Operations** roles.
 
 ## What this project demonstrates
 
@@ -80,17 +80,19 @@ Optional local equivalent:
 | Resume bullets | [resume-bullets.md](resume-bullets.md) |
 | Full validation checklist | [final-validation-checklist.md](final-validation-checklist.md) |
 
-## What maps to Exxeta requirements
+## What this demonstrates for Managed Services / Support Operations roles
 
-| Exxeta expectation | Evidence in this repo |
+| Capability | Evidence in this repo |
 |---|---|
-| 2nd-level incident handling | INC-001–003 drills, runbooks, investigation commands |
+| Application support | Spring Boot API, health checks, application logs |
+| Database troubleshooting | EXPLAIN ANALYZE workflow, index fix, before/after evidence (PRB-001, CHG-001) |
 | Monitoring and alerting | Prometheus rules, Grafana dashboard, `support_api_database_up` metric |
-| Linux / container operations | Docker Compose stack, container restart runbooks |
-| SQL / database troubleshooting | M6 workflow, EXPLAIN evidence, PRB-001, CHG-001 |
-| Kubernetes familiarity | kind manifests, deploy/rollback scripts |
-| ITIL-aligned operations | ITSM process docs, artifact map, cross-linked records |
-| Clear documentation | Runbooks, escalation model, this reviewer guide |
+| Incident response | INC-001–003 drills, runbooks, investigation commands |
+| ITSM process | Incident, problem, change records, SLA matrix, escalation model |
+| Container operations | Docker Compose stack, Nginx proxy, restart runbooks |
+| Kubernetes basics | kind manifests, deploy/rollback scripts, health probes |
+| CI/CD validation | GitHub Actions workflows, local CI script |
+| Documentation discipline | Runbooks, artifact map, cross-linked records |
 
 ## What is intentionally local-only
 
@@ -99,7 +101,7 @@ Optional local equivalent:
 | Docker Compose lab | Full stack + monitoring without cloud cost |
 | kind Kubernetes | Deployment/rollback pattern without EKS/AKS account |
 | `emptyDir` Postgres in K8s | Disposable lab storage — not production persistence |
-| Lab-defined SLA targets | Portfolio demonstration — not Exxeta's official SLA |
+| Lab-defined SLA targets | Portfolio demonstration — not an official customer SLA |
 | CI validation only | No registry push, no cloud deploy, no secrets |
 | Simulation endpoints | Gated by `SUPPORT_SIMULATION_ENABLED=true` for controlled drills |
 

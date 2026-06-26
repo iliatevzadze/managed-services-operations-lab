@@ -31,7 +31,7 @@ Map local lab components to common managed services cloud equivalents — reflec
 
 ## Hybrid managed services context
 
-Many Exxeta Managed Services customers run **hybrid** estates: on-premises integrations, cloud-hosted APIs, and centralized monitoring. This lab trains transferable skills:
+Many Managed Services customers run **hybrid** estates: on-premises integrations, cloud-hosted APIs, and centralized monitoring. This lab trains transferable skills:
 
 - Same incident process regardless of cloud
 - Runbook structure adapts; investigation logic stays consistent

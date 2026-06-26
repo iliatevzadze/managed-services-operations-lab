@@ -13,7 +13,7 @@
 - Kubernetes basics — local deploy, health probes, safe rollback
 - CI/CD — automated tests, container build, offline manifest validation
 
-**Intentionally local-only:** no cloud deployment, no registry push, no paid services, no secrets. Lab-defined SLA targets are for portfolio demonstration — not Exxeta's official SLA.
+**Intentionally local-only:** no cloud deployment, no registry push, no paid services, no secrets. Lab-defined SLA targets are for portfolio demonstration — not an official customer SLA.
 
 Reviewer entry point: [reviewer-guide.md](reviewer-guide.md) · Validation: [final-validation-checklist.md](final-validation-checklist.md)
 

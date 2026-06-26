@@ -2,7 +2,7 @@
 
 A fast reference for employers reviewing this portfolio. Every artifact below demonstrates how a **2nd-level Managed Services Support Operations Engineer** detects issues, investigates with evidence, resolves safely, documents clearly, and prevents recurrence.
 
-> Targets in this lab are **lab-defined** for portfolio demonstration — not Exxeta's official SLA.
+> Targets in this lab are **lab-defined** for portfolio demonstration — not an official customer SLA.
 
 ---
 

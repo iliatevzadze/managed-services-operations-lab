@@ -1,6 +1,6 @@
 # SLA and Priority Matrix
 
-Priority definitions and response targets for the Support Portal API lab. These are **lab-defined targets** for portfolio demonstration — **not Exxeta's official SLA**.
+Priority definitions and response targets for the Support Portal API lab. These are **lab-defined targets** for portfolio demonstration — **not an official customer SLA**.
 
 ## Priority matrix
 
