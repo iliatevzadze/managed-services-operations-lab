@@ -29,8 +29,11 @@ bash -n scripts/k8s/*.sh
 bash -n scripts/sql/*.sh
 
 echo "[CI] 6/6 Kubernetes manifest validation ..."
+# --validate=false keeps this client-side only: it validates YAML structure and
+# Kubernetes object construction without contacting a cluster API server.
+# Full runtime validation is covered by scripts/k8s/deploy-kind.sh.
 if command -v kubectl >/dev/null 2>&1; then
-  kubectl apply --dry-run=client -f k8s/base/
+  kubectl apply --dry-run=client --validate=false -f k8s/base/
 else
   echo "[CI] kubectl not found — skipping Kubernetes manifest validation."
 fi

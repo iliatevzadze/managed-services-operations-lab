@@ -1,7 +1,14 @@
 # Managed Services Operations Lab — Kubernetes Manifests CI (Milestone 9)
 # Client-side validation of the k8s/base/ manifests. No cluster is created.
-# `--dry-run=client` parses and validates manifests locally without an API
-# server, so no kind/cloud cluster is needed.
+#
+# `--dry-run=client --validate=false` parses the YAML and constructs the
+# Kubernetes objects locally. --validate=false disables OpenAPI schema
+# validation, which would otherwise try to reach a cluster API server
+# (localhost:8080) when none is running.
+#
+# This validates YAML structure and Kubernetes object construction locally.
+# It intentionally does not contact a cluster.
+# Full runtime validation is covered by scripts/k8s/deploy-kind.sh.
 name: Kubernetes Manifests CI
 
 on:
@@ -24,27 +31,28 @@ jobs:
         run: kubectl version --client
 
       # Validate the whole base/ directory in one pass.
+      # --validate=false avoids contacting a cluster API server for schema checks.
       - name: Validate all base manifests
-        run: kubectl apply --dry-run=client -f k8s/base/
+        run: kubectl apply --dry-run=client --validate=false -f k8s/base/
 
       # Validate each manifest individually for clear per-file failures.
       - name: Validate namespace
-        run: kubectl apply --dry-run=client -f k8s/base/namespace.yaml
+        run: kubectl apply --dry-run=client --validate=false -f k8s/base/namespace.yaml
 
       - name: Validate postgres secret
-        run: kubectl apply --dry-run=client -f k8s/base/postgres-secret.yaml
+        run: kubectl apply --dry-run=client --validate=false -f k8s/base/postgres-secret.yaml
 
       - name: Validate support-api configmap
-        run: kubectl apply --dry-run=client -f k8s/base/support-api-configmap.yaml
+        run: kubectl apply --dry-run=client --validate=false -f k8s/base/support-api-configmap.yaml
 
       - name: Validate postgres deployment
-        run: kubectl apply --dry-run=client -f k8s/base/postgres-deployment.yaml
+        run: kubectl apply --dry-run=client --validate=false -f k8s/base/postgres-deployment.yaml
 
       - name: Validate postgres service
-        run: kubectl apply --dry-run=client -f k8s/base/postgres-service.yaml
+        run: kubectl apply --dry-run=client --validate=false -f k8s/base/postgres-service.yaml
 
       - name: Validate support-api deployment
-        run: kubectl apply --dry-run=client -f k8s/base/support-api-deployment.yaml
+        run: kubectl apply --dry-run=client --validate=false -f k8s/base/support-api-deployment.yaml
 
       - name: Validate support-api service
-        run: kubectl apply --dry-run=client -f k8s/base/support-api-service.yaml
+        run: kubectl apply --dry-run=client --validate=false -f k8s/base/support-api-service.yaml

@@ -20,14 +20,25 @@ on `push` and `pull_request`.
 |---|---|---|---|
 | **Java CI** | `java-ci.yml` | `test` | `mvn test` (H2-backed unit tests) and `mvn package -DskipTests` on Java 21 (Temurin, Maven cache) |
 | **Docker Compose CI** | `docker-compose-ci.yml` | `compose-validate` | `docker compose version`, `docker compose config`, and `docker build` of the API image |
-| **Kubernetes Manifests CI** | `k8s-ci.yml` | `k8s-validate` | Installs stable `kubectl`, then `kubectl apply --dry-run=client` over `k8s/base/` (whole directory + each file) |
+| **Kubernetes Manifests CI** | `k8s-ci.yml` | `k8s-validate` | Installs stable `kubectl`, then `kubectl apply --dry-run=client --validate=false` over `k8s/base/` (whole directory + each file) |
 
 ### Why client-side dry-run for Kubernetes
 
-`kubectl apply --dry-run=client` parses and validates manifests **locally**,
-without contacting an API server. This means manifest structure, required
-fields, and basic schema are checked **without creating a cluster** — fast, free,
-and reliable in CI.
+`kubectl apply --dry-run=client --validate=false` parses the YAML and constructs
+the Kubernetes objects **locally**, without contacting an API server.
+
+`--validate=false` is required because OpenAPI **schema** validation would
+otherwise try to reach a cluster API server (`localhost:8080`) when none is
+running, failing with `connection refused`. Disabling it keeps the check fully
+client-side, so it:
+
+- validates YAML structure and Kubernetes object construction locally,
+- intentionally does **not** contact a cluster,
+
+while **full runtime validation is covered by `scripts/k8s/deploy-kind.sh`**
+(Milestone 8), which applies the manifests to a real kind cluster and waits for
+rollout. CI stays fast, free, and reliable; runtime correctness is proven by the
+deploy script.
 
 ## What CI intentionally does NOT do
 
@@ -77,7 +88,8 @@ repository owner. Badges reflect the latest run on the default branch.
 | Maven cache miss / slow build | First run or `pom.xml` changed | Expected; cache repopulates on next run |
 | `docker compose config` errors | Invalid YAML or undefined variable in `docker-compose.yml` | Run `docker compose config` locally to see the parsed output |
 | `docker build` fails | Dockerfile or dependency issue | Build locally: `docker build -t test app/spring-support-api` |
-| `kubectl apply --dry-run=client` fails | Manifest schema/field error in `k8s/base/` | Validate the named file locally with the same command |
+| K8s validation: `connection refused` to `localhost:8080` | OpenAPI schema validation tried to reach a cluster | Already handled — the workflow uses `--validate=false`; ensure your command includes it |
+| `kubectl apply --dry-run=client --validate=false` fails | Manifest structure/field error in `k8s/base/` | Validate the named file locally with the same command |
 | kubectl install step fails | Transient network issue fetching the stable release | Re-run the job |
 
 ## Related documents
