@@ -20,22 +20,28 @@ on `push` and `pull_request`.
 |---|---|---|---|
 | **Java CI** | `java-ci.yml` | `test` | `mvn test` (H2-backed unit tests) and `mvn package -DskipTests` on Java 21 (Temurin, Maven cache) |
 | **Docker Compose CI** | `docker-compose-ci.yml` | `compose-validate` | `docker compose version`, `docker compose config`, and `docker build` of the API image |
-| **Kubernetes Manifests CI** | `k8s-ci.yml` | `k8s-validate` | Installs stable `kubectl`, then `kubectl apply --dry-run=client --validate=false` over `k8s/base/` (whole directory + each file) |
+| **Kubernetes Manifests CI** | `k8s-ci.yml` | `k8s-validate` | Runs `kubeconform` (via Docker) to validate `k8s/base/` against the Kubernetes schemas — fully offline, no cluster, no kubectl |
 
-### Why client-side dry-run for Kubernetes
+### Why kubeconform (not kubectl) for Kubernetes
 
-`kubectl apply --dry-run=client --validate=false` parses the YAML and constructs
-the Kubernetes objects **locally**, without contacting an API server.
+`kubectl` dry-run is **intentionally not used** for offline validation. Even
+`kubectl apply --dry-run=client --validate=false` can still contact the cluster
+API server for **resource discovery** when no cluster exists, failing with
+`connection refused` to `localhost:8080`.
 
-`--validate=false` is required because OpenAPI **schema** validation would
-otherwise try to reach a cluster API server (`localhost:8080`) when none is
-running, failing with `connection refused`. Disabling it keeps the check fully
-client-side, so it:
+[`kubeconform`](https://github.com/yannh/kubeconform) validates manifests against
+the Kubernetes JSON schemas **entirely offline** — no cluster and no kubectl
+required. It runs through Docker (already required by local CI):
 
-- validates YAML structure and Kubernetes object construction locally,
-- intentionally does **not** contact a cluster,
+```bash
+docker run --rm -v "$PWD":/work -w /work \
+  ghcr.io/yannh/kubeconform:latest -strict -summary k8s/base
+```
 
-while **full runtime validation is covered by `scripts/k8s/deploy-kind.sh`**
+- `-strict` rejects unknown/duplicate fields; `-summary` prints a pass/fail count.
+- This validates manifest structure and schema locally and **does not contact a cluster**.
+
+**Full runtime validation remains [`scripts/k8s/deploy-kind.sh`](../scripts/k8s/deploy-kind.sh)**
 (Milestone 8), which applies the manifests to a real kind cluster and waits for
 rollout. CI stays fast, free, and reliable; runtime correctness is proven by the
 deploy script.
@@ -88,8 +94,9 @@ repository owner. Badges reflect the latest run on the default branch.
 | Maven cache miss / slow build | First run or `pom.xml` changed | Expected; cache repopulates on next run |
 | `docker compose config` errors | Invalid YAML or undefined variable in `docker-compose.yml` | Run `docker compose config` locally to see the parsed output |
 | `docker build` fails | Dockerfile or dependency issue | Build locally: `docker build -t test app/spring-support-api` |
-| K8s validation: `connection refused` to `localhost:8080` | OpenAPI schema validation tried to reach a cluster | Already handled — the workflow uses `--validate=false`; ensure your command includes it |
-| `kubectl apply --dry-run=client --validate=false` fails | Manifest structure/field error in `k8s/base/` | Validate the named file locally with the same command |
+| K8s validation: `connection refused` to `localhost:8080` | Using `kubectl` dry-run, which contacts the API server | Use `kubeconform` (offline) as the workflow and local CI script do |
+| kubeconform reports a manifest invalid | Structure/field/schema error in `k8s/base/` | Run the kubeconform Docker command locally to see the failing file |
+| kubeconform Docker image pull fails | Transient network issue fetching `ghcr.io/yannh/kubeconform` | Re-run the job |
 | kubectl install step fails | Transient network issue fetching the stable release | Re-run the job |
 
 ## Related documents

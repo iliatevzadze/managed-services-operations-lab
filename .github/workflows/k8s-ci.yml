@@ -1,12 +1,12 @@
 # Managed Services Operations Lab — Kubernetes Manifests CI (Milestone 9)
-# Client-side validation of the k8s/base/ manifests. No cluster is created.
+# Clusterless, offline validation of the k8s/base/ manifests.
 #
-# `--dry-run=client --validate=false` parses the YAML and constructs the
-# Kubernetes objects locally. --validate=false disables OpenAPI schema
-# validation, which would otherwise try to reach a cluster API server
-# (localhost:8080) when none is running.
+# kubectl dry-run is intentionally NOT used: even `--dry-run=client
+# --validate=false` can still contact the API server for resource discovery,
+# which fails when no cluster exists. kubeconform validates manifests against
+# the Kubernetes JSON schemas entirely offline — no cluster, no kubectl.
 #
-# This validates YAML structure and Kubernetes object construction locally.
+# This validates manifest structure and schema locally.
 # It intentionally does not contact a cluster.
 # Full runtime validation is covered by scripts/k8s/deploy-kind.sh.
 name: Kubernetes Manifests CI
@@ -22,37 +22,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Install kubectl (official stable release)
+      - name: Validate manifests with kubeconform (offline)
         run: |
-          curl -fsSLO "https://dl.k8s.io/release/$(curl -fsSL https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-          sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
-
-      - name: kubectl version
-        run: kubectl version --client
-
-      # Validate the whole base/ directory in one pass.
-      # --validate=false avoids contacting a cluster API server for schema checks.
-      - name: Validate all base manifests
-        run: kubectl apply --dry-run=client --validate=false -f k8s/base/
-
-      # Validate each manifest individually for clear per-file failures.
-      - name: Validate namespace
-        run: kubectl apply --dry-run=client --validate=false -f k8s/base/namespace.yaml
-
-      - name: Validate postgres secret
-        run: kubectl apply --dry-run=client --validate=false -f k8s/base/postgres-secret.yaml
-
-      - name: Validate support-api configmap
-        run: kubectl apply --dry-run=client --validate=false -f k8s/base/support-api-configmap.yaml
-
-      - name: Validate postgres deployment
-        run: kubectl apply --dry-run=client --validate=false -f k8s/base/postgres-deployment.yaml
-
-      - name: Validate postgres service
-        run: kubectl apply --dry-run=client --validate=false -f k8s/base/postgres-service.yaml
-
-      - name: Validate support-api deployment
-        run: kubectl apply --dry-run=client --validate=false -f k8s/base/support-api-deployment.yaml
-
-      - name: Validate support-api service
-        run: kubectl apply --dry-run=client --validate=false -f k8s/base/support-api-service.yaml
+          docker run --rm -v "$PWD":/work -w /work \
+            ghcr.io/yannh/kubeconform:latest -strict -summary k8s/base

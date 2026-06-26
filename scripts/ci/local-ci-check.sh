@@ -29,14 +29,13 @@ bash -n scripts/k8s/*.sh
 bash -n scripts/sql/*.sh
 
 echo "[CI] 6/6 Kubernetes manifest validation ..."
-# --validate=false keeps this client-side only: it validates YAML structure and
-# Kubernetes object construction without contacting a cluster API server.
+# kubeconform validates manifests against the Kubernetes JSON schemas entirely
+# offline. kubectl dry-run is avoided because it can still contact the API
+# server for resource discovery when no cluster exists.
 # Full runtime validation is covered by scripts/k8s/deploy-kind.sh.
-if command -v kubectl >/dev/null 2>&1; then
-  kubectl apply --dry-run=client --validate=false -f k8s/base/
-else
-  echo "[CI] kubectl not found — skipping Kubernetes manifest validation."
-fi
+docker run --rm -v "$PWD":/work -w /work \
+  ghcr.io/yannh/kubeconform:latest -strict -summary k8s/base
+echo "[CI] Kubernetes manifests validated with kubeconform"
 
 echo
 echo "[CI] All local CI checks passed."

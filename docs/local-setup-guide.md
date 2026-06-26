@@ -279,15 +279,15 @@ Run the same validation as the GitHub Actions workflows before pushing:
 ```
 
 Runs Java tests + package, `docker compose config`, the API image build, shell
-syntax checks, and (if `kubectl` is installed) the Kubernetes manifest dry-run.
-Details: [cicd-guide.md](cicd-guide.md).
+syntax checks, and offline Kubernetes manifest validation via `kubeconform`
+(through Docker — no cluster or kubectl needed). Details: [cicd-guide.md](cicd-guide.md).
 
 ## Verification checklist (M9)
 
 - [ ] `./scripts/ci/local-ci-check.sh` completes with "All local CI checks passed."
 - [ ] `mvn test` and `mvn package -DskipTests` succeed
 - [ ] `docker compose config` is valid and the API image builds
-- [ ] `k8s/base/` passes `kubectl apply --dry-run=client` (or is skipped without kubectl)
+- [ ] `k8s/base/` passes offline `kubeconform` validation (via Docker)
 
 ## Verification checklist (M1, no Docker)
 

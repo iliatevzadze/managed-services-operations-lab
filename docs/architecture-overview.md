@@ -160,8 +160,8 @@ GitHub Actions validates every push and pull request **before changes are accept
    └──────────┬──────────┘
             ▼
    ┌─────────────────────┐   Kubernetes Manifests CI
-   │ kubectl apply        │  --dry-run=client over k8s/base/
-   │ (client-side only)   │  (no cluster created)
+   │ kubeconform (Docker) │  offline schema validation of k8s/base/
+   │ (clusterless)        │  (no cluster, no kubectl)
    └──────────┬──────────┘
             ▼
      change accepted / mergeable

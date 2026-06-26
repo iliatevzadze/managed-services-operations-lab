@@ -246,7 +246,7 @@ GitHub Actions runs **validation gates** on every push and pull request — no c
 |---|---|
 | [Java CI](.github/workflows/java-ci.yml) | `mvn test` + `mvn package` on Java 21 |
 | [Docker Compose CI](.github/workflows/docker-compose-ci.yml) | `docker compose config` + API image build |
-| [Kubernetes Manifests CI](.github/workflows/k8s-ci.yml) | `kubectl apply --dry-run=client` over `k8s/base/` |
+| [Kubernetes Manifests CI](.github/workflows/k8s-ci.yml) | `kubeconform` offline schema validation of `k8s/base/` |
 
 Run the same checks locally before pushing:
 
