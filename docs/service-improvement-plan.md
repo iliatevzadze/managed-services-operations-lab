@@ -16,7 +16,8 @@ Proactive items that reduce incident volume, tighten detection, and raise operat
 | **Backup validation** | SI-005 — automated backup verification | Backlog |
 | **Incident script hardening** | SI-008 env checklist, SI-009 disable simulation in prod, SI-010 alert drill cadence | **Added (M5)** |
 | **Safe deployment & rollback** | SI-014 kubectl rollback runbook + script; SI-015 local kind rehearsal environment (M8) | **Added (M8)** |
-| **Future CI/CD health gates** | Pre-deploy smoke tests, datasource validation (SI-011), staging soak before promote | Planned (M9) |
+| **CI/CD validation gates** | SI-017 Java tests, Docker build/config, K8s manifest dry-run on push/PR (M9); local CI check (SI-018) | **Added (M9)** |
+| **Future CI/CD health gates** | Pre-deploy smoke tests, datasource validation (SI-011), staging soak before promote | Backlog |
 
 Supporting detail in the table below.
 
@@ -40,6 +41,8 @@ Supporting detail in the table below.
 | SI-014 | Kubernetes rollback runbook + script for failed deployments | CHG-003, PRB-002, M8 | High | **Added (M8)** |
 | SI-015 | Local kind environment for deployment/rollback rehearsal | failed-deployment, M8 | Medium | **Added (M8)** |
 | SI-016 | Replace emptyDir with PVC when persistence is in scope | M8 storage note | Low | Backlog |
+| SI-017 | CI validation gates: Java tests, Docker build/config, K8s dry-run | Change discipline, M9 | High | **Added (M9)** |
+| SI-018 | Local CI check script for shift-left validation | Change discipline, M9 | Medium | **Added (M9)** |
 
 ## Lessons from Milestone 6 SQL investigation
 

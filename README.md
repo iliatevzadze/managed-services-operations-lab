@@ -1,5 +1,11 @@
 # Managed Services Operations Lab — Exxeta-Focused 2nd Level Support Simulation
 
+[![Java CI](https://github.com/USERNAME/managed-services-operations-lab/actions/workflows/java-ci.yml/badge.svg)](https://github.com/USERNAME/managed-services-operations-lab/actions/workflows/java-ci.yml)
+[![Docker Compose CI](https://github.com/USERNAME/managed-services-operations-lab/actions/workflows/docker-compose-ci.yml/badge.svg)](https://github.com/USERNAME/managed-services-operations-lab/actions/workflows/docker-compose-ci.yml)
+[![Kubernetes Manifests CI](https://github.com/USERNAME/managed-services-operations-lab/actions/workflows/k8s-ci.yml/badge.svg)](https://github.com/USERNAME/managed-services-operations-lab/actions/workflows/k8s-ci.yml)
+
+> Replace `USERNAME` in the badge URLs above with your GitHub username/org after pushing the repository.
+
 A portfolio project demonstrating **2nd-level Managed Services support operations thinking**: detect issues, investigate systematically, troubleshoot with evidence, identify root cause, resolve safely, document clearly, prevent recurrence, and improve service quality.
 
 ---
@@ -232,6 +238,26 @@ Storage uses an `emptyDir` volume (ephemeral) — intentional for a disposable l
 
 ---
 
+## CI/CD validation (Milestone 9)
+
+GitHub Actions runs **validation gates** on every push and pull request — no cloud deployment, no registry push, no secrets. CI validates application tests, container build, Docker Compose config, and Kubernetes manifests before changes are accepted.
+
+| Workflow | Validates |
+|---|---|
+| [Java CI](.github/workflows/java-ci.yml) | `mvn test` + `mvn package` on Java 21 |
+| [Docker Compose CI](.github/workflows/docker-compose-ci.yml) | `docker compose config` + API image build |
+| [Kubernetes Manifests CI](.github/workflows/k8s-ci.yml) | `kubectl apply --dry-run=client` over `k8s/base/` |
+
+Run the same checks locally before pushing:
+
+```bash
+./scripts/ci/local-ci-check.sh
+```
+
+Full detail: [docs/cicd-guide.md](docs/cicd-guide.md)
+
+---
+
 ## Simulated incidents (Milestone 5)
 
 Controlled drills demonstrate **alert-driven 2nd-level incident response**: detect via Prometheus, investigate with runbooks, restore safely, document in incident records.
@@ -320,6 +346,7 @@ Complete ITSM-style process documentation for incident, problem, and change mana
 | [docs/service-improvement-plan.md](docs/service-improvement-plan.md) | Continuous improvement backlog |
 | [docs/aws-azure-mapping.md](docs/aws-azure-mapping.md) | Cloud service mapping for hybrid MS context |
 | [k8s/README.md](k8s/README.md) | Local Kubernetes extension (kind): deploy, validate, rollback |
+| [docs/cicd-guide.md](docs/cicd-guide.md) | CI/CD validation workflows and local CI check |
 
 **Runbooks:** [runbooks/](runbooks/) — Operational procedures for common incidents.
 
@@ -344,7 +371,7 @@ Complete ITSM-style process documentation for incident, problem, and change mana
 | **M6** | SQL troubleshooting: EXPLAIN ANALYZE, index fix, evidence files | **Completed** |
 | **M7** | ITSM documentation: artifact map, process guides, SLA/escalation | **Completed** |
 | **M8** | Local Kubernetes extension (kind): deploy, validate, safe rollback | **Completed** |
-| M9 | CI/CD workflows, automated validation | Planned |
+| **M9** | CI/CD validation: Java tests, Docker build/config, K8s manifest dry-run | **Completed** |
 
 ---
 

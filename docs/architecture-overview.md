@@ -143,6 +143,32 @@ A **local-only** Kubernetes deployment on [kind](https://kind.sigs.k8s.io/) demo
 
 Manifests: [`k8s/base/`](../k8s/) · Cluster config: [`k8s/kind/cluster-config.yaml`](../k8s/kind/cluster-config.yaml) · Scripts: [`scripts/k8s/`](../scripts/k8s/) · Guide: [`k8s/README.md`](../k8s/README.md)
 
+## CI/CD validation flow (Milestone 9)
+
+GitHub Actions validates every push and pull request **before changes are accepted**. It is validation-only: no cloud deployment, no registry push, no secrets.
+
+```
+   commit / pull request
+            │
+            ▼
+   ┌─────────────────────┐   Java CI
+   │  mvn test + package │   (Java 21, Temurin, Maven cache)
+   └──────────┬──────────┘
+            ▼
+   ┌─────────────────────┐   Docker Compose CI
+   │ docker compose config│  + docker build (no push)
+   └──────────┬──────────┘
+            ▼
+   ┌─────────────────────┐   Kubernetes Manifests CI
+   │ kubectl apply        │  --dry-run=client over k8s/base/
+   │ (client-side only)   │  (no cluster created)
+   └──────────┬──────────┘
+            ▼
+     change accepted / mergeable
+```
+
+The same gates run locally via [`scripts/ci/local-ci-check.sh`](../scripts/ci/local-ci-check.sh). This mirrors the change-management principle: **validate before you accept**. Workflows: [`.github/workflows/`](../.github/workflows/) · Guide: [`cicd-guide.md`](cicd-guide.md).
+
 ## Components
 
 ### spring-support-api

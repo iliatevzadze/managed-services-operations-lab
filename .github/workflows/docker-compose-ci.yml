@@ -1,0 +1,25 @@
+# Managed Services Operations Lab — Docker Compose CI (Milestone 9)
+# Validates the Compose file and that the API image builds.
+# Intentionally does NOT run `docker compose up` — keeps CI fast, stable, free.
+# No registry push, no secrets.
+name: Docker Compose CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  compose-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Show Docker Compose version
+        run: docker compose version
+
+      - name: Validate Compose configuration
+        run: docker compose config
+
+      - name: Build API image (no push)
+        run: docker build -t msol/spring-support-api:ci app/spring-support-api
