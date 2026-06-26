@@ -1,5 +1,22 @@
 # Service Overview
 
+## Project summary and scope
+
+**Managed Services Operations Lab** is a local portfolio project simulating 2nd-level support for the **Support Portal API** — a containerized Spring Boot service behind Nginx, backed by PostgreSQL, monitored by Prometheus/Grafana, with optional Kubernetes deployment on kind and CI validation via GitHub Actions.
+
+**Scope (what it demonstrates):**
+
+- Application support — health checks, ticket API, controlled incident drills
+- Database troubleshooting — EXPLAIN ANALYZE, index optimization with evidence
+- Monitoring — alert rules, operations dashboard, metric-driven response
+- ITSM — incidents, problems, changes, runbooks, SLA/escalation documentation
+- Kubernetes basics — local deploy, health probes, safe rollback
+- CI/CD — automated tests, container build, offline manifest validation
+
+**Intentionally local-only:** no cloud deployment, no registry push, no paid services, no secrets. Lab-defined SLA targets are for portfolio demonstration — not Exxeta's official SLA.
+
+Reviewer entry point: [reviewer-guide.md](reviewer-guide.md) · Validation: [final-validation-checklist.md](final-validation-checklist.md)
+
 ## Service name
 
 **Support Portal API** (`spring-support-api`) — internal B2B API backing customer support workflows and managed services incident simulation.
@@ -59,9 +76,9 @@ Actuator endpoints (`/actuator/health`, `/actuator/prometheus`) are available fo
 | Reporting batch jobs | Scheduled read queries |
 | Integration middleware | Webhook and REST endpoints |
 
-**Upstream dependencies:** Nginx reverse proxy (planned), container runtime, Kubernetes (higher environments).
+**Upstream dependencies:** Nginx reverse proxy, container runtime, Kubernetes (local kind extension, M8).
 
-**Downstream dependencies:** PostgreSQL, external identity provider (future milestone).
+**Downstream dependencies:** PostgreSQL, external identity provider (out of scope).
 
 ## Availability target
 
@@ -88,3 +105,5 @@ See [sla-priority-matrix.md](sla-priority-matrix.md) for priority definitions.
 - Incidents: [../incidents/](../incidents/)
 - Problem records: [../problem-records/](../problem-records/)
 - Change records: [../changes/](../changes/)
+- Reviewer guide: [reviewer-guide.md](reviewer-guide.md)
+- Final validation: [final-validation-checklist.md](final-validation-checklist.md)

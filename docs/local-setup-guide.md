@@ -13,7 +13,8 @@
 | **M6** | SQL troubleshooting: EXPLAIN ANALYZE, index evidence | **Completed** |
 | **M7** | ITSM documentation: process guides, artifact map | **Completed** |
 | **M8** | Local Kubernetes extension (kind): deploy, validate, rollback | **Completed** |
-| **M9** | CI/CD validation: Java tests, Docker build/config, K8s dry-run | **Completed** |
+| **M9** | CI/CD validation: Java tests, Docker build/config, kubeconform | **Completed** |
+| **M10** | GitHub/portfolio polish: reviewer guide, resume bullets, validation checklist | **Completed** |
 
 ## Prerequisites
 
@@ -288,6 +289,21 @@ syntax checks, and offline Kubernetes manifest validation via `kubeconform`
 - [ ] `mvn test` and `mvn package -DskipTests` succeed
 - [ ] `docker compose config` is valid and the API image builds
 - [ ] `k8s/base/` passes offline `kubeconform` validation (via Docker)
+
+## Final validation (M10)
+
+Run the complete pre-share checklist before pushing to GitHub or sharing with employers:
+
+```bash
+# Full local CI (Java, Docker, scripts, kubeconform)
+./scripts/ci/local-ci-check.sh
+
+# Stack health (with Docker Compose running)
+curl -s http://localhost:18081/health | jq .
+curl -s http://localhost:19090/targets
+```
+
+Checklist: [final-validation-checklist.md](final-validation-checklist.md) · Walkthrough: [reviewer-guide.md](reviewer-guide.md)
 
 ## Verification checklist (M1, no Docker)
 

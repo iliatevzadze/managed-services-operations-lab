@@ -4,327 +4,212 @@
 [![Docker Compose CI](https://github.com/USERNAME/managed-services-operations-lab/actions/workflows/docker-compose-ci.yml/badge.svg)](https://github.com/USERNAME/managed-services-operations-lab/actions/workflows/docker-compose-ci.yml)
 [![Kubernetes Manifests CI](https://github.com/USERNAME/managed-services-operations-lab/actions/workflows/k8s-ci.yml/badge.svg)](https://github.com/USERNAME/managed-services-operations-lab/actions/workflows/k8s-ci.yml)
 
-> Replace `USERNAME` in the badge URLs above with your GitHub username/org after pushing the repository.
+> Replace `USERNAME` in the badge URLs with your GitHub username/org after pushing.
 
-A portfolio project demonstrating **2nd-level Managed Services support operations thinking**: detect issues, investigate systematically, troubleshoot with evidence, identify root cause, resolve safely, document clearly, prevent recurrence, and improve service quality.
+A **local portfolio lab** that demonstrates 2nd-level **Managed Services support operations**: monitoring-driven incident response, PostgreSQL troubleshooting with evidence, ITSM documentation (incidents, problems, changes), Kubernetes deploy/rollback basics, and CI/CD validation — all runnable on a laptop without cloud accounts or paid services. Built to show hiring managers I can operate a production-like customer platform with discipline, traceability, and customer-impact awareness.
 
----
-
-## Purpose
-
-This repository simulates the operational reality of a **Support Operations Engineer — Managed Services** role. It is not a generic DevOps showcase. It is a structured lab environment where incidents, problems, changes, monitoring, and runbooks reflect how managed services teams keep customer platforms stable under SLA pressure.
-
-The goal is to show hiring managers and technical interviewers that I can operate production-like services with discipline, traceability, and customer impact awareness.
+**New reviewer?** Start with [docs/reviewer-guide.md](docs/reviewer-guide.md) (~10 minutes).
 
 ---
 
-## Why this project exists
+## Exxeta positioning
 
-Managed Services support is judged on outcomes, not tool familiarity alone. Employers need engineers who can:
+Aligned with **Exxeta's Support Operations Engineer — Managed Services** role (Tbilisi, Hybrid). This is not a generic DevOps demo — it mirrors how a 2nd-level engineer keeps a contracted customer platform stable under SLA pressure.
 
-- Respond to alerts without guessing
-- Separate symptoms from root cause
-- Restore service quickly and safely
-- Escalate at the right time with the right context
-- Leave behind documentation that helps the next engineer
-
-This project exists to make that workflow visible and repeatable in a GitHub portfolio.
-
----
-
-## Exxeta role alignment
-
-This lab is intentionally aligned with **Exxeta's Support Operations Engineer — Managed Services** role (Tbilisi, Hybrid). The project reflects responsibilities commonly expected in that position:
-
-| Role expectation | How this project demonstrates it |
+| Role expectation | Evidence in this repo |
 |---|---|
-| 2nd-level incident handling | Documented incidents with investigation steps, commands, and resolution |
-| Monitoring and alerting | Prometheus, Grafana, Alertmanager structure and monitoring guides |
-| Linux and container operations | Docker Compose lab, container restart and deployment runbooks |
-| SQL and database troubleshooting | Database-down and slow-query runbooks, backup/restore procedures |
-| Cloud platform familiarity | AWS/Azure mapping document for hybrid managed services context |
-| ITIL-aligned operations | Incident, problem, change records; [ITSM artifact map](docs/itsm-artifact-map.md) and process guides (M7) |
-| Clear communication | Runbooks, escalation model, and employer-facing documentation |
+| 2nd-level incident handling | INC-001–003 drills, runbooks, timestamped investigation steps |
+| Monitoring and alerting | Prometheus rules, Grafana dashboard, `support_api_database_up` metric |
+| Linux / container operations | Docker Compose stack, restart and deployment runbooks |
+| SQL / database troubleshooting | EXPLAIN ANALYZE workflow, index fix, before/after evidence |
+| Kubernetes familiarity | kind manifests, deploy/rollback scripts, health probes |
+| ITIL-aligned operations | [ITSM artifact map](docs/itsm-artifact-map.md), process guides (M7) |
+| Change discipline | CHG-001–005 with rollback and validation plans |
+| CI validation | GitHub Actions + [local CI script](scripts/ci/local-ci-check.sh) |
 
 ---
 
-## Managed Services scenario
+## Quick start
 
-**Customer context:** A B2B SaaS platform ("Support Portal API") runs on containers behind a reverse proxy, backed by PostgreSQL, monitored by Prometheus/Grafana, and deployed to Kubernetes in higher environments.
+```bash
+git clone <repo-url> && cd managed-services-operations-lab
 
-**Support model:** 1st level triages and gathers initial data. **2nd level** (this project's focus) investigates, troubleshoots, implements safe fixes or coordinates changes, validates recovery, and drives problem/change follow-up.
+# Full stack (app + monitoring)
+docker compose up -d --build
+curl -s http://localhost:18081/health | jq .
 
-**Operating principles:**
+# Optional: local CI (same gates as GitHub Actions)
+./scripts/ci/local-ci-check.sh
+```
 
-1. **Detect** — Alert or ticket indicates abnormal behavior
-2. **Investigate** — Gather logs, metrics, and recent changes
-3. **Troubleshoot** — Narrow scope with evidence, not assumptions
-4. **Identify root cause** — Distinguish trigger from underlying failure
-5. **Resolve safely** — Minimize blast radius; prefer rollback when uncertain
-6. **Document clearly** — Incident record, runbook updates, handover notes
-7. **Prevent recurrence** — Problem record, permanent fix, monitoring improvement
-8. **Improve service quality** — Change management and service improvement plan
+**Prerequisites:** Docker + Docker Compose. For Kubernetes extension: [kind](https://kind.sigs.k8s.io/) + kubectl. For tests only: Java 21 + Maven.
+
+Full setup: [docs/local-setup-guide.md](docs/local-setup-guide.md) · Validation: [docs/final-validation-checklist.md](docs/final-validation-checklist.md)
 
 ---
 
 ## Architecture overview
 
 ```
-                    ┌─────────────┐
-                    │   Clients   │
-                    └──────┬──────┘
-                           │
-                    ┌──────▼──────┐
-                    │    Nginx    │  Reverse proxy / TLS
-                    └──────┬──────┘
-                           │
-              ┌────────────▼────────────┐
-              │   spring-support-api    │  Spring Boot 3.5 — ticket API (M1)
-              └────────────┬────────────┘
-                           │
-              ┌────────────▼────────────┐
-              │      PostgreSQL         │  Primary datastore
-              └─────────────────────────┘
-
-   ┌──────────────────────────────────────────────────┐
-   │  Observability: Prometheus → Grafana             │
-   │                 Alertmanager → on-call / ticket  │
-   └──────────────────────────────────────────────────┘
+Clients → Nginx (:18081) → spring-support-api (:8080) → PostgreSQL (:5432)
+                                    ↓
+              Prometheus → Grafana / Alertmanager (metrics + alerts)
 ```
 
-Local lab runs via Docker Compose (full monitoring stack). A local Kubernetes extension on kind ([k8s/](k8s/), Milestone 8) demonstrates the deployment and safe-rollback support pattern.
-
-See [docs/architecture-overview.md](docs/architecture-overview.md) for detail.
-
----
-
-## Technology stack
-
-| Layer | Technology | Role in lab |
+| Layer | Technology | Purpose |
 |---|---|---|
-| Application | Java, Spring Boot | Simulated customer API with realistic failure modes |
-| Database | PostgreSQL | Persistence, query performance scenarios |
-| Proxy | Nginx | Routing, health checks, upstream failures |
-| Containers | Docker, Docker Compose | Local multi-service environment |
-| Orchestration | Kubernetes | Deployment, rollback, and pod restart scenarios |
-| Monitoring | Prometheus, Grafana, Alertmanager | Metrics, dashboards, alert routing |
-| Operations | Bash, SQL, Git | Investigation commands and versioned ops artifacts |
-| Cloud mapping | AWS / Azure concepts | Hybrid managed services context |
+| Application | Java 21, Spring Boot 3.5 | Customer support ticket API |
+| Database | PostgreSQL 16 | Persistence, slow-query scenarios |
+| Proxy | Nginx | Customer entry point, fault isolation |
+| Containers | Docker Compose | Full local stack + monitoring |
+| Orchestration | Kubernetes (kind) | Deploy/rollback pattern (M8) |
+| Observability | Prometheus, Grafana, Alertmanager | Alert-driven incident response |
+| CI | GitHub Actions | Tests, image build, manifest validation |
+
+Docker Compose is the **primary environment** (monitoring included). Kubernetes on kind is a **local extension** for deployment/runtime support. Detail: [docs/architecture-overview.md](docs/architecture-overview.md).
 
 ---
 
-## What this project demonstrates
+## Local ports
 
-- **Incident management** — Structured records with priority, impact, investigation, and resolution
-- **Problem management** — Root cause analysis and permanent fixes for recurring issues
-- **Change management** — Risk-assessed changes with rollback and validation plans
-- **Runbook-driven response** — Repeatable procedures for common failure modes
-- **Monitoring literacy** — Alert thresholds, dashboards, and gap identification
-- **Database operations** — Backup, restore, and query troubleshooting
-- **Safe operational judgment** — Rollback over risky fixes; evidence before action
-- **Documentation discipline** — Cross-linked incidents, problems, changes, and runbooks
-
----
-
-## Local setup
-
-> **Milestone 2:** The full stack (Nginx → Spring Boot API → PostgreSQL) runs locally via Docker Compose.
-
-**Prerequisites:** Docker + Docker Compose (full stack), or Java 21 + Maven 3.9+ (API tests only).
-
-### Run the stack (Docker Compose)
-
-```bash
-docker compose up -d --build
-docker compose ps
-```
-
-**Service URLs:**
-
-| Target | URL |
-|---|---|
-| API direct (troubleshooting) | http://localhost:18080/health |
-| Nginx proxy (customer entry point) | http://localhost:18081/health |
-| Tickets via proxy | http://localhost:18081/tickets |
-| PostgreSQL host access | localhost:15434 |
-
-**Monitoring URLs (Milestone 3–4):**
-
-| Target | URL | Notes |
+| Service | Host port | URL / access |
 |---|---|---|
-| Prometheus | http://localhost:19090 | Targets (`/targets`), alerts (`/alerts`), rules |
-| Grafana | http://localhost:13003 | Login `admin` / `admin`; dashboard in **Managed Services** folder |
-| Alertmanager | http://localhost:19093 | Receives alerts from Prometheus |
-| Node Exporter | http://localhost:19100/metrics | Host metrics |
-| cAdvisor | http://localhost:18084 | Container metrics |
-| App metrics endpoint | http://localhost:18080/actuator/prometheus | Includes `support_api_database_up` |
+| API (direct) | 18080 | http://localhost:18080/health |
+| Nginx (customer path) | 18081 | http://localhost:18081/health |
+| PostgreSQL | 15434 | `localhost:15434` |
+| Prometheus | 19090 | http://localhost:19090 |
+| Grafana | 13003 | http://localhost:13003 (`admin` / `admin`) |
+| Alertmanager | 19093 | http://localhost:19093 |
+| cAdvisor | 18084 | http://localhost:18084 |
+| Node Exporter | 19100 | http://localhost:19100/metrics |
+| Kubernetes API (kind) | 18082 | http://localhost:18082/health |
 
-**Grafana dashboard:** Managed Services Operations Overview — http://localhost:13003 (Dashboards → Managed Services)
+---
 
-**Alert rules (summary):**
+## Completed milestones (M0–M10)
 
-| Alert | Severity | Trigger |
+| Milestone | Scope | Status |
 |---|---|---|
-| SupportApiDown | critical | Application scrape target down |
-| SupportApiDatabaseDown | critical | `support_api_database_up == 0` |
-| SupportApiHighErrorRate | warning | HTTP 5xx rate > 0 |
-| SupportApiHighCpuUsage | warning | CPU > 80% |
-| ContainerMemoryHigh | warning | API container memory > 500 MB |
-| NodeExporterDown / CadvisorDown | warning | Metrics collector unavailable |
-
-**Verify monitoring (Milestone 4):**
-
-```bash
-docker compose up -d --build
-docker compose ps
-curl -s http://localhost:19090/-/ready
-curl -s http://localhost:19090/api/v1/rules | jq '.data.groups[].name'    # managed-services-alerts
-curl -s 'http://localhost:19090/api/v1/query?query=support_api_database_up' | jq .
-docker compose exec prometheus promtool check rules /etc/prometheus/rules/managed-services-alerts.yml
-# Open http://localhost:19090/targets — all jobs UP
-# Open http://localhost:13003 — Managed Services Operations Overview dashboard
-```
-
-**Stop the stack:**
-
-```bash
-docker compose down       # keep data volumes
-docker compose down -v    # remove data volumes (postgres, prometheus, grafana)
-```
-
-### Validate the API without Docker (Milestone 1)
-
-```bash
-cd app/spring-support-api
-mvn test
-```
-
-`mvn test` uses H2 in PostgreSQL compatibility mode (`application-test.properties`) and does **not** require Docker or PostgreSQL.
-
-See [docs/local-setup-guide.md](docs/local-setup-guide.md) for details.
+| M0 | Repository foundation, docs, record skeletons | ✅ |
+| M1 | Spring Boot API, Flyway, tests | ✅ |
+| M2 | Docker Compose: Nginx → API → PostgreSQL | ✅ |
+| M3 | Monitoring: Prometheus, Grafana, exporters | ✅ |
+| M4 | Alert rules, Grafana dashboard, DB health metric | ✅ |
+| M5 | Incident simulations INC-001–003 + drill scripts | ✅ |
+| M6 | SQL troubleshooting: EXPLAIN, index fix, evidence | ✅ |
+| M7 | ITSM documentation: artifact map, process guides | ✅ |
+| M8 | Local Kubernetes (kind): deploy, safe rollback | ✅ |
+| M9 | CI/CD: Java, Docker, kubeconform manifest validation | ✅ |
+| M10 | GitHub/portfolio polish: reviewer guide, resume bullets | ✅ |
 
 ---
 
-## Local Kubernetes extension (Milestone 8)
+## Screenshots (add after running locally)
 
-A **local-only** Kubernetes deployment on [kind](https://kind.sigs.k8s.io/) demonstrates the deployment, validation, and **safe rollback** pattern a 2nd-level engineer uses on a Kubernetes platform — no cloud account, no paid services, no Helm. **Docker Compose remains the main environment** for the full monitoring stack; Kubernetes is a focused deployment/runtime extension.
+> Place captured screenshots in `docs/screenshots/` and uncomment the links below.
 
-**Prerequisites:** Docker, [kind](https://kind.sigs.k8s.io/docs/user/quick-start/#installation), kubectl
-
-```bash
-# Build image, create kind cluster 'msol', load image, apply manifests, wait for rollout
-./scripts/k8s/deploy-kind.sh
-
-# Verify
-curl -s http://localhost:18082/health
-curl -s http://localhost:18082/tickets
-kubectl -n managed-services-lab get pods,svc
-
-# Safe rollback to the previous revision
-./scripts/k8s/rollback-support-api.sh
-
-# Tear down the cluster
-./scripts/k8s/delete-kind.sh
-```
-
-**URLs (via kind port mapping `localhost:18082` → NodePort `30080`):**
-
-| Target | URL |
+| View | Placeholder |
 |---|---|
-| Health | http://localhost:18082/health |
-| Tickets | http://localhost:18082/tickets |
-
-Storage uses an `emptyDir` volume (ephemeral) — intentional for a disposable lab, **not production persistence**. Details: [k8s/README.md](k8s/README.md) · Rollback runbook: [runbooks/kubernetes-rollback.md](runbooks/kubernetes-rollback.md)
+| Grafana — Managed Services Operations Overview | `<!-- ![Grafana dashboard](docs/screenshots/grafana-overview.png) -->` |
+| Prometheus — targets and alerts | `<!-- ![Prometheus targets](docs/screenshots/prometheus-targets.png) -->` |
+| Health endpoint — UP / database UP | `<!-- ![Health check](docs/screenshots/health-up.png) -->` |
 
 ---
 
-## CI/CD validation (Milestone 9)
+## ITSM / Managed Services documentation
 
-GitHub Actions runs **validation gates** on every push and pull request — no cloud deployment, no registry push, no secrets. CI validates application tests, container build, Docker Compose config, and Kubernetes manifests before changes are accepted.
+Cross-linked incident, problem, and change management — employer-facing and mapped to ServiceNow/Jira/Confluence.
 
-| Workflow | Validates |
+| Document | Description |
 |---|---|
-| [Java CI](.github/workflows/java-ci.yml) | `mvn test` + `mvn package` on Java 21 |
-| [Docker Compose CI](.github/workflows/docker-compose-ci.yml) | `docker compose config` + API image build |
-| [Kubernetes Manifests CI](.github/workflows/k8s-ci.yml) | `kubeconform` offline schema validation of `k8s/base/` |
+| [docs/itsm-artifact-map.md](docs/itsm-artifact-map.md) | Fast map of all ITSM artifacts |
+| [docs/incident-management-process.md](docs/incident-management-process.md) | Lifecycle, triage, ServiceNow mapping |
+| [docs/problem-management-process.md](docs/problem-management-process.md) | RCA, permanent fix, Jira mapping |
+| [docs/change-management-process.md](docs/change-management-process.md) | Standard / Normal / Emergency changes |
+| [docs/sla-priority-matrix.md](docs/sla-priority-matrix.md) | P1–P4 (lab-defined targets) |
+| [docs/escalation-model.md](docs/escalation-model.md) | L1/L2/L3, evidence before escalation |
 
-Run the same checks locally before pushing:
-
-```bash
-./scripts/ci/local-ci-check.sh
-```
-
-Full detail: [docs/cicd-guide.md](docs/cicd-guide.md)
+Records: [incidents/](incidents/) · [problem-records/](problem-records/) · [changes/](changes/) · [runbooks/](runbooks/)
 
 ---
 
-## Simulated incidents (Milestone 5)
+## Incident simulation (Milestone 5)
 
-Controlled drills demonstrate **alert-driven 2nd-level incident response**: detect via Prometheus, investigate with runbooks, restore safely, document in incident records.
+Controlled drills: detect via Prometheus → investigate with runbook → restore → document.
 
-**Prerequisites:** full stack running (`docker compose up -d --build`)
+**Prerequisites:** `docker compose up -d --build`
 
-| Drill | Simulate | Restore | Expected alert |
+| Drill | Simulate | Restore | Alert |
 |---|---|---|---|
-| Database down | `./scripts/incidents/simulate-database-down.sh` | `./scripts/incidents/restore-database-down.sh` | `SupportApiDatabaseDown` |
-| HTTP 500 errors | `./scripts/incidents/simulate-http-500.sh` | Stop requests; wait for rate decay | `SupportApiHighErrorRate` |
-| Bad env / restart loop | `./scripts/incidents/simulate-bad-env-restart-loop.sh` | `./scripts/incidents/restore-bad-env-restart-loop.sh` | `SupportApiDatabaseDown`, unhealthy container |
+| Database down | `simulate-database-down.sh` | `restore-database-down.sh` | `SupportApiDatabaseDown` |
+| HTTP 500 | `simulate-http-500.sh` | Wait for rate decay | `SupportApiHighErrorRate` |
+| Bad env / restart | `simulate-bad-env-restart-loop.sh` | `restore-bad-env-restart-loop.sh` | Unhealthy container |
 
-Documented incidents: [incidents/INC-001-database-down.md](incidents/INC-001-database-down.md), [INC-002](incidents/INC-002-application-500-errors.md), [INC-003](incidents/INC-003-container-restart-loop.md)
-
-Verify alerts during drill: http://localhost:19090/alerts
+Scripts: [scripts/incidents/](scripts/incidents/) · Records: [INC-001](incidents/INC-001-database-down.md), [INC-002](incidents/INC-002-application-500-errors.md), [INC-003](incidents/INC-003-container-restart-loop.md)
 
 ---
 
 ## SQL troubleshooting (Milestone 6)
 
-2nd-level support workflow for **slow ticket history search** — investigate with evidence, apply index fix, validate improvement.
+Slow ticket history search on ~100k rows — investigate, index, validate with committed evidence.
 
 ```bash
-docker compose up -d
 ./scripts/sql/run-slow-query-investigation.sh
 ```
 
-**Evidence files (portfolio):**
-
-| Phase | File |
-|---|---|
-| Before index | `database/sql-troubleshooting/evidence/before-index-explain.txt` |
-| After index | `database/sql-troubleshooting/evidence/after-index-explain.txt` |
-
-Related: [PRB-001](problem-records/PRB-001-recurring-database-timeout.md), [CHG-001](changes/CHG-001-add-sql-index.md), [runbooks/slow-sql-query.md](runbooks/slow-sql-query.md)
-
----
-
-## Planned incident simulations
-
-| ID | Scenario | Status |
+| Phase | Plan | Execution time |
 |---|---|---|
-| INC-001 | Database unavailable | **Drill available (M5)** |
-| INC-002 | Application HTTP 500 errors | **Drill available (M5)** |
-| INC-003 | Container restart loop / bad config | **Drill available (M5)** |
-| INC-004 | High CPU on application pod | Planned (M6+) |
-| INC-005 | Slow SQL query degrading API | **Investigation available (M6)** |
-| INC-006 | Failed deployment | Partially covered by INC-003 drill |
-| INC-007 | Monitoring alert threshold gap | Documented (PRB-004) |
-| INC-008 | Backup failure before maintenance | Documented |
+| **Before** index | Seq Scan on `support_ticket_events` | **~7 ms** |
+| **After** index | Bitmap Index Scan on composite index | **~0.6 ms** |
 
-Example incident records: [incidents/](incidents/)
+Evidence: `database/sql-troubleshooting/evidence/before-index-explain.txt` · `after-index-explain.txt`  
+Related: [PRB-001](problem-records/PRB-001-recurring-database-timeout.md) · [CHG-001](changes/CHG-001-add-sql-index.md)
 
 ---
 
-## ITSM / Managed Services Documentation
+## Local Kubernetes extension (Milestone 8)
 
-Complete ITSM-style process documentation for incident, problem, and change management — employer-facing and cross-linked to records in this repo.
+kind cluster for deploy/rollback pattern — **no cloud, no Helm**. Docker Compose remains the monitoring environment.
 
-| Document | Description |
+```bash
+./scripts/k8s/deploy-kind.sh
+curl -s http://localhost:18082/health
+./scripts/k8s/rollback-support-api.sh   # needs ≥2 revisions
+./scripts/k8s/delete-kind.sh
+```
+
+Guide: [k8s/README.md](k8s/README.md) · Rollback: [runbooks/kubernetes-rollback.md](runbooks/kubernetes-rollback.md)
+
+---
+
+## CI/CD validation (Milestone 9)
+
+Validation gates on every push/PR — no deploy, no registry push, no secrets.
+
+| Workflow | Validates |
 |---|---|
-| [docs/itsm-artifact-map.md](docs/itsm-artifact-map.md) | Fast map of all ITSM artifacts and tool mappings |
-| [docs/incident-management-process.md](docs/incident-management-process.md) | Incident lifecycle, triage, validation, ServiceNow mapping |
-| [docs/problem-management-process.md](docs/problem-management-process.md) | RCA, permanent fix, Jira mapping |
-| [docs/change-management-process.md](docs/change-management-process.md) | Standard / Normal / Emergency changes, rollback |
-| [docs/sla-priority-matrix.md](docs/sla-priority-matrix.md) | P1–P4 definitions and lab-defined response targets |
-| [docs/escalation-model.md](docs/escalation-model.md) | L1/L2/L3 responsibilities and escalation evidence |
+| [Java CI](.github/workflows/java-ci.yml) | `mvn test` + `mvn package` (Java 21) |
+| [Docker Compose CI](.github/workflows/docker-compose-ci.yml) | `docker compose config` + image build |
+| [Kubernetes Manifests CI](.github/workflows/k8s-ci.yml) | `kubeconform` offline schema check |
+
+```bash
+./scripts/ci/local-ci-check.sh
+```
+
+Detail: [docs/cicd-guide.md](docs/cicd-guide.md)
+
+---
+
+## Reviewer path (recommended order)
+
+1. **Read this README** — scope, architecture, ports
+2. **Run Docker Compose** — `docker compose up -d --build`
+3. **Check Grafana/Prometheus** — dashboard + targets UP
+4. **Run one incident simulation** — database-down drill + restore
+5. **Read ITSM artifact map** — [docs/itsm-artifact-map.md](docs/itsm-artifact-map.md)
+6. **Review CI workflows** — [`.github/workflows/`](.github/workflows/)
+
+Guided walkthrough: [docs/reviewer-guide.md](docs/reviewer-guide.md) · Resume bullets: [docs/resume-bullets.md](docs/resume-bullets.md)
 
 ---
 
@@ -332,76 +217,33 @@ Complete ITSM-style process documentation for incident, problem, and change mana
 
 | Document | Description |
 |---|---|
-| [docs/itsm-artifact-map.md](docs/itsm-artifact-map.md) | ITSM artifact map (incidents, problems, changes, runbooks) |
-| [docs/service-overview.md](docs/service-overview.md) | Service context, stakeholders, and SLA framing |
-| [docs/architecture-overview.md](docs/architecture-overview.md) | Components, data flow, and failure domains |
-| [docs/local-setup-guide.md](docs/local-setup-guide.md) | Environment setup by milestone |
-| [docs/monitoring-guide.md](docs/monitoring-guide.md) | Metrics, dashboards, and alerting approach |
-| [docs/sla-priority-matrix.md](docs/sla-priority-matrix.md) | Priority definitions and response expectations |
-| [docs/escalation-model.md](docs/escalation-model.md) | When and how to escalate |
-| [docs/incident-management-process.md](docs/incident-management-process.md) | Incident lifecycle |
-| [docs/problem-management-process.md](docs/problem-management-process.md) | Problem lifecycle and RCA |
-| [docs/change-management-process.md](docs/change-management-process.md) | Change types, approval, and validation |
-| [docs/backup-restore-guide.md](docs/backup-restore-guide.md) | Backup strategy and restore procedure |
-| [docs/service-improvement-plan.md](docs/service-improvement-plan.md) | Continuous improvement backlog |
-| [docs/aws-azure-mapping.md](docs/aws-azure-mapping.md) | Cloud service mapping for hybrid MS context |
-| [k8s/README.md](k8s/README.md) | Local Kubernetes extension (kind): deploy, validate, rollback |
-| [docs/cicd-guide.md](docs/cicd-guide.md) | CI/CD validation workflows and local CI check |
-
-**Runbooks:** [runbooks/](runbooks/) — Operational procedures for common incidents.
-
-**Records:**
-
-- [incidents/](incidents/) — Incident examples and templates
-- [problem-records/](problem-records/) — Root cause and permanent fix tracking
-- [changes/](changes/) — Change records with rollback plans
-
----
-
-## Milestone roadmap
-
-| Milestone | Scope | Status |
-|---|---|---|
-| M0 | Repository foundation, README, documentation and record skeletons | Completed |
-| M1 | Spring Boot support API, Flyway schema, seeded tickets, tests | Completed |
-| M2 | Docker Compose stack: Nginx → API → PostgreSQL, health checks, backup/restore | Completed |
-| **M3** | Monitoring stack: Prometheus, Grafana, Alertmanager, Node Exporter, cAdvisor | Completed |
-| **M4** | Prometheus alert rules, Grafana dashboard, `support_api_database_up` metric | Completed |
-| **M5** | Controlled incident simulations, drill scripts, documented INC-001–003 | Completed |
-| **M6** | SQL troubleshooting: EXPLAIN ANALYZE, index fix, evidence files | **Completed** |
-| **M7** | ITSM documentation: artifact map, process guides, SLA/escalation | **Completed** |
-| **M8** | Local Kubernetes extension (kind): deploy, validate, safe rollback | **Completed** |
-| **M9** | CI/CD validation: Java tests, Docker build/config, K8s manifest dry-run | **Completed** |
-
----
-
-## Future improvements
-
-- Automated incident scenario injection for repeatable drills
-- Synthetic monitoring and SLO-based alerting
-- Integration with ticketing workflow (Jira/ServiceNow-style fields)
-- On-call rotation simulation and escalation timing metrics
-- Expanded cloud-specific runbooks (EKS/AKS, RDS/Azure Database)
-- Post-incident review templates and blameless RCA format
+| [docs/reviewer-guide.md](docs/reviewer-guide.md) | 10-minute reviewer walkthrough |
+| [docs/final-validation-checklist.md](docs/final-validation-checklist.md) | Pre-share validation checklist |
+| [docs/resume-bullets.md](docs/resume-bullets.md) | CV/LinkedIn bullets |
+| [docs/service-overview.md](docs/service-overview.md) | Service context and API |
+| [docs/architecture-overview.md](docs/architecture-overview.md) | Components, data flow, CI/CD |
+| [docs/local-setup-guide.md](docs/local-setup-guide.md) | Setup by milestone |
+| [docs/monitoring-guide.md](docs/monitoring-guide.md) | Metrics, dashboards, alerts |
+| [docs/cicd-guide.md](docs/cicd-guide.md) | CI workflows and troubleshooting |
+| [docs/aws-azure-mapping.md](docs/aws-azure-mapping.md) | Cloud mapping for hybrid MS |
+| [k8s/README.md](k8s/README.md) | kind deploy, rollback, delete |
 
 ---
 
 ## Resume positioning
 
-**Suggested title:** Managed Services Operations Lab — 2nd Level Support Simulation
+**Title:** Managed Services Operations Lab — 2nd Level Support Simulation
 
-**One-liner for resume or LinkedIn:**
+**Bullets:** [docs/resume-bullets.md](docs/resume-bullets.md)
 
-> Built a production-style operations lab simulating 2nd-level Managed Services support: incident/problem/change management, monitoring-driven troubleshooting, database and container operations, and ITIL-aligned documentation — aligned with enterprise support engineering roles.
+**Interview talking points:**
 
-**Talking points for interviews:**
-
-- Walk through INC-001 or INC-002: how you detected, investigated, and resolved
-- Explain the difference between incident fix and problem permanent fix (PRB-001 → CHG-001)
-- Describe when you would rollback vs. hotfix (CHG-003)
-- Show how monitoring gaps become problem records (PRB-004 → CHG-002)
-- Connect local Docker lab concepts to AWS/Azure managed services (see aws-azure-mapping.md)
+- Walk INC-001: detect → investigate → restore → document
+- Explain incident fix vs. problem permanent fix (PRB-001 → CHG-001)
+- Rollback vs. hotfix decision (CHG-003)
+- Monitoring gap → problem record (PRB-004 → CHG-002)
+- Map local Docker concepts to AWS/Azure ([aws-azure-mapping.md](docs/aws-azure-mapping.md))
 
 ---
 
-*This project is a learning and portfolio artifact. It is not affiliated with or endorsed by Exxeta.*
+*Portfolio learning project. Not affiliated with or endorsed by Exxeta.*

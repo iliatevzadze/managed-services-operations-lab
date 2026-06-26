@@ -133,6 +133,15 @@ A fast reference for employers reviewing this portfolio. Every artifact below de
 
 ---
 
+## Reviewer resources
+
+| Document | Purpose |
+|---|---|
+| [reviewer-guide.md](reviewer-guide.md) | 10-minute walkthrough for hiring managers |
+| [final-validation-checklist.md](final-validation-checklist.md) | Pre-share validation checklist |
+
+---
+
 ## How to read this portfolio as a hiring manager
 
 1. **Operations thinking** — [INC-001](../incidents/INC-001-database-down.md): detect → investigate → restore → document
