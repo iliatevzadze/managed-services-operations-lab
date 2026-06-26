@@ -1,8 +1,8 @@
 # Managed Services Operations Lab — Exxeta-Focused 2nd Level Support Simulation
 
-[![Java CI](https://github.com/USERNAME/managed-services-operations-lab/actions/workflows/java-ci.yml/badge.svg)](https://github.com/USERNAME/managed-services-operations-lab/actions/workflows/java-ci.yml)
-[![Docker Compose CI](https://github.com/USERNAME/managed-services-operations-lab/actions/workflows/docker-compose-ci.yml/badge.svg)](https://github.com/USERNAME/managed-services-operations-lab/actions/workflows/docker-compose-ci.yml)
-[![Kubernetes Manifests CI](https://github.com/USERNAME/managed-services-operations-lab/actions/workflows/k8s-ci.yml/badge.svg)](https://github.com/USERNAME/managed-services-operations-lab/actions/workflows/k8s-ci.yml)
+[![Java CI](https://github.com/iliatevzadze/managed-services-operations-lab/actions/workflows/java-ci.yml/badge.svg)](https://github.com/iliatevzadze/managed-services-operations-lab/actions/workflows/java-ci.yml)
+[![Docker Compose CI](https://github.com/iliatevzadze/managed-services-operations-lab/actions/workflows/docker-compose-ci.yml/badge.svg)](https://github.com/iliatevzadze/managed-services-operations-lab/actions/workflows/docker-compose-ci.yml)
+[![Kubernetes Manifests CI](https://github.com/iliatevzadze/managed-services-operations-lab/actions/workflows/k8s-ci.yml/badge.svg)](https://github.com/iliatevzadze/managed-services-operations-lab/actions/workflows/k8s-ci.yml)
 
 > Replace `USERNAME` in the badge URLs with your GitHub username/org after pushing.
 
