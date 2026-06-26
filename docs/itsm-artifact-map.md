@@ -137,7 +137,7 @@ A fast reference for employers reviewing this portfolio. Every artifact below de
 
 | Document | Purpose |
 |---|---|
-| [reviewer-guide.md](reviewer-guide.md) | 10-minute walkthrough for hiring managers |
+| [reviewer-guide.md](reviewer-guide.md) | Reviewer walkthrough for hiring managers |
 | [final-validation-checklist.md](final-validation-checklist.md) | Pre-share validation checklist |
 
 ---

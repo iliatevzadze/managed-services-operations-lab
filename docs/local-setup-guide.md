@@ -73,7 +73,7 @@ docker compose up -d --build
 docker compose ps
 ```
 
-The API waits for PostgreSQL to pass its `pg_isready` health check before starting. First build downloads Maven dependencies and may take a few minutes.
+The API waits for PostgreSQL to pass its `pg_isready` health check before starting. First build downloads Maven dependencies; allow extra time on a cold start.
 
 ### Verify
 
@@ -303,7 +303,7 @@ curl -s http://localhost:18081/health | jq .
 curl -s http://localhost:19090/targets
 ```
 
-Checklist: [final-validation-checklist.md](final-validation-checklist.md) · Walkthrough: [reviewer-guide.md](reviewer-guide.md)
+Checklist: [final-validation-checklist.md](final-validation-checklist.md) · Review path: [reviewer-guide.md](reviewer-guide.md)
 
 ## Verification checklist (M1, no Docker)
 

@@ -8,7 +8,7 @@
 
 A local portfolio lab demonstrating my ability to operate and troubleshoot a production-like Managed Services environment. The project covers containerized application support, PostgreSQL troubleshooting, monitoring with Prometheus/Grafana, incident/problem/change management, Kubernetes deployment basics and CI/CD validation — all runnable locally without cloud accounts or paid services.
 
-**New reviewer?** Start with [docs/reviewer-guide.md](docs/reviewer-guide.md) (~10 minutes).
+**New reviewer?** Start with [docs/reviewer-guide.md](docs/reviewer-guide.md) — recommended review path.
 
 ---
 
@@ -207,7 +207,7 @@ Detail: [docs/cicd-guide.md](docs/cicd-guide.md)
 5. **Read ITSM artifact map** — [docs/itsm-artifact-map.md](docs/itsm-artifact-map.md)
 6. **Review CI workflows** — [`.github/workflows/`](.github/workflows/)
 
-Guided walkthrough: [docs/reviewer-guide.md](docs/reviewer-guide.md) · Resume bullets: [docs/resume-bullets.md](docs/resume-bullets.md)
+Guided review path: [docs/reviewer-guide.md](docs/reviewer-guide.md) · Resume bullets: [docs/resume-bullets.md](docs/resume-bullets.md)
 
 ---
 
@@ -215,7 +215,7 @@ Guided walkthrough: [docs/reviewer-guide.md](docs/reviewer-guide.md) · Resume b
 
 | Document | Description |
 |---|---|
-| [docs/reviewer-guide.md](docs/reviewer-guide.md) | 10-minute reviewer walkthrough |
+| [docs/reviewer-guide.md](docs/reviewer-guide.md) | Reviewer walkthrough |
 | [docs/final-validation-checklist.md](docs/final-validation-checklist.md) | Pre-share validation checklist |
 | [docs/resume-bullets.md](docs/resume-bullets.md) | CV/LinkedIn bullets |
 | [docs/service-overview.md](docs/service-overview.md) | Service context and API |

@@ -1,6 +1,6 @@
-# Reviewer Guide — 10-Minute Walkthrough
+# Reviewer Guide — Practical Walkthrough
 
-A fast path for hiring managers and technical reviewers evaluating this portfolio for **Managed Services / Support Operations** roles.
+A quick reviewer path for hiring managers and technical reviewers evaluating this portfolio for **Managed Services / Support Operations** roles.
 
 ## What this project demonstrates
 
@@ -15,13 +15,13 @@ Local **2nd-level Managed Services operations** across:
 
 Everything runs **locally** — no cloud account, no paid services, no secrets.
 
-## Fastest way to validate (~10 minutes)
+## Validation path
 
-### 1. Read the README (2 min)
+### 1. Read the README
 
 Start at [../README.md](../README.md) — project summary, architecture, ports, reviewer path.
 
-### 2. Run Docker Compose (2 min)
+### 2. Run Docker Compose
 
 ```bash
 docker compose up -d --build
@@ -31,7 +31,7 @@ curl -s http://localhost:18081/health | jq .
 
 Expected: `status: UP`, `database: UP`.
 
-### 3. Check monitoring (2 min)
+### 3. Check monitoring
 
 | Check | URL / command |
 |---|---|
@@ -43,7 +43,7 @@ Expected: `status: UP`, `database: UP`.
 curl -s 'http://localhost:19090/api/v1/query?query=support_api_database_up' | jq .
 ```
 
-### 4. Run one incident simulation (2 min)
+### 4. Run one incident simulation
 
 ```bash
 ./scripts/incidents/simulate-database-down.sh
@@ -53,11 +53,11 @@ curl -s 'http://localhost:19090/api/v1/query?query=support_api_database_up' | jq
 
 Read the matching record: [INC-001](../incidents/INC-001-database-down.md).
 
-### 5. Review ITSM artifacts (1 min)
+### 5. Review ITSM artifacts
 
 Open [itsm-artifact-map.md](itsm-artifact-map.md) — one-page map of incidents, problems, changes, runbooks, and tool mappings.
 
-### 6. Skim CI workflows (1 min)
+### 6. Skim CI workflows
 
 [`.github/workflows/`](../.github/workflows/) — Java CI, Docker Compose CI, Kubernetes Manifests CI (kubeconform, offline).
 

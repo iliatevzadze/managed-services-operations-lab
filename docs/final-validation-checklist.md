@@ -42,4 +42,4 @@ Run before sharing this repository with employers or opening a pull request for 
 ./scripts/ci/local-ci-check.sh
 ```
 
-For a guided walkthrough, see [reviewer-guide.md](reviewer-guide.md).
+For the recommended review path, see [reviewer-guide.md](reviewer-guide.md).
