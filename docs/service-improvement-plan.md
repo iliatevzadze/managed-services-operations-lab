@@ -4,6 +4,21 @@
 
 Track proactive improvements that reduce incident volume, improve detection, and raise service quality beyond reactive support.
 
+## Continuous Service Improvement Backlog
+
+Proactive items that reduce incident volume, tighten detection, and raise operational maturity. Reviewed monthly; sourced from incidents, problems, and post-incident reviews.
+
+| Theme | Backlog items | Status |
+|---|---|---|
+| **Monitoring threshold tuning** | SI-002 — tune CPU alert (PRB-004, CHG-002) | Planned |
+| **Better health checks** | SI-003 — readiness vs liveness (PRB-002, CHG-005) | Planned |
+| **SQL index improvement** | SI-001 — composite index validated (PRB-001, CHG-001, M6) | **Done (lab)** |
+| **Backup validation** | SI-005 — automated backup verification | Backlog |
+| **Incident script hardening** | SI-008 env checklist, SI-009 disable simulation in prod, SI-010 alert drill cadence | **Added (M5)** |
+| **Future CI/CD health gates** | Pre-deploy smoke tests, datasource validation (SI-011), staging soak before promote | Planned (M8) |
+
+Supporting detail in the table below.
+
 ## Current backlog
 
 | ID | Improvement | Driver | Priority | Status |

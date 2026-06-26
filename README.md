@@ -37,7 +37,7 @@ This lab is intentionally aligned with **Exxeta's Support Operations Engineer �
 | Linux and container operations | Docker Compose lab, container restart and deployment runbooks |
 | SQL and database troubleshooting | Database-down and slow-query runbooks, backup/restore procedures |
 | Cloud platform familiarity | AWS/Azure mapping document for hybrid managed services context |
-| ITIL-aligned operations | Incident, problem, and change records with cross-references |
+| ITIL-aligned operations | Incident, problem, change records; [ITSM artifact map](docs/itsm-artifact-map.md) and process guides (M7) |
 | Clear communication | Runbooks, escalation model, and employer-facing documentation |
 
 ---
@@ -254,10 +254,26 @@ Example incident records: [incidents/](incidents/)
 
 ---
 
+## ITSM / Managed Services Documentation
+
+Complete ITSM-style process documentation for incident, problem, and change management — employer-facing and cross-linked to records in this repo.
+
+| Document | Description |
+|---|---|
+| [docs/itsm-artifact-map.md](docs/itsm-artifact-map.md) | Fast map of all ITSM artifacts and tool mappings |
+| [docs/incident-management-process.md](docs/incident-management-process.md) | Incident lifecycle, triage, validation, ServiceNow mapping |
+| [docs/problem-management-process.md](docs/problem-management-process.md) | RCA, permanent fix, Jira mapping |
+| [docs/change-management-process.md](docs/change-management-process.md) | Standard / Normal / Emergency changes, rollback |
+| [docs/sla-priority-matrix.md](docs/sla-priority-matrix.md) | P1–P4 definitions and lab-defined response targets |
+| [docs/escalation-model.md](docs/escalation-model.md) | L1/L2/L3 responsibilities and escalation evidence |
+
+---
+
 ## Documentation map
 
 | Document | Description |
 |---|---|
+| [docs/itsm-artifact-map.md](docs/itsm-artifact-map.md) | ITSM artifact map (incidents, problems, changes, runbooks) |
 | [docs/service-overview.md](docs/service-overview.md) | Service context, stakeholders, and SLA framing |
 | [docs/architecture-overview.md](docs/architecture-overview.md) | Components, data flow, and failure domains |
 | [docs/local-setup-guide.md](docs/local-setup-guide.md) | Environment setup by milestone |
@@ -292,8 +308,9 @@ Example incident records: [incidents/](incidents/)
 | **M4** | Prometheus alert rules, Grafana dashboard, `support_api_database_up` metric | Completed |
 | **M5** | Controlled incident simulations, drill scripts, documented INC-001–003 | Completed |
 | **M6** | SQL troubleshooting: EXPLAIN ANALYZE, index fix, evidence files | **Completed** |
-| M7 | Kubernetes manifests, deployment and rollback scenarios | Planned |
-| M8 | CI/CD workflows, automated validation | Planned |
+| **M7** | ITSM documentation: artifact map, process guides, SLA/escalation | **Completed** |
+| M8 | Kubernetes manifests, deployment and rollback scenarios | Planned |
+| M9 | CI/CD workflows, automated validation | Planned |
 
 ---
 

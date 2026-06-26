@@ -10,8 +10,9 @@
 | **M3** | Monitoring stack: Prometheus, Grafana, exporters | Completed |
 | **M4** | Alert rules, Grafana dashboard, database health metric | Completed |
 | **M5** | Controlled incident simulations and drill scripts | Completed |
-| **M6** | SQL troubleshooting: EXPLAIN ANALYZE, index evidence | **Available now** |
-| M7+ | Kubernetes, CI/CD | Planned |
+| **M6** | SQL troubleshooting: EXPLAIN ANALYZE, index evidence | **Completed** |
+| **M7** | ITSM documentation: process guides, artifact map | **Completed** |
+| M8+ | Kubernetes, CI/CD | Planned |
 
 ## Prerequisites
 

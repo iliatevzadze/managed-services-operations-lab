@@ -2,103 +2,145 @@
 
 ## Scope
 
-Incident management restores normal service operation as quickly as possible while preserving evidence for problem management.
+Incident management restores normal service operation as quickly as possible while preserving evidence for problem and change management. This process reflects how a **2nd-level Managed Services engineer** operates the Support Portal API lab and maps to common ITSM tooling.
 
-## Lifecycle
+## Incident lifecycle
 
 ```
 Detect → Log → Triage → Investigate → Mitigate/Resolve → Validate → Document → Close
                                                               ↓
-                                                    Problem record (if recurring)
+                                         Problem record (if recurring) / Change (if fix deployed)
+                                                              ↓
+                                                    Post-incident review (P1/P2)
 ```
 
 ## Roles
 
 | Role | Responsibility |
 |---|---|
-| 1st level | Initial ticket, severity suggestion, attach customer reports |
-| **2nd level** | Investigation, troubleshooting, resolution, incident record |
-| 3rd level | Deep RCA, code fixes, architectural changes |
-| Incident commander (P1) | Coordination, comms, decision authority |
+| **L1** | Initial ticket, customer contact, severity suggestion, attach screenshots/logs |
+| **L2** | Investigation, troubleshooting, safe resolution, incident record, escalation |
+| **L3** | Code fixes, DBA actions, architecture, complex RCA |
+| **Incident commander (P1)** | Coordination, customer comms, decision authority |
 
-## Incident record requirements
+## Priority handling (P1–P4)
 
-Each incident must capture:
+| Priority | L2 focus | Response target (lab) |
+|---|---|---|
+| **P1** | All hands; bridge; restore first | Acknowledge 15 min; update every 30 min |
+| **P2** | Investigate runbook; customer updates | Acknowledge 1 hour; update every 2 hours |
+| **P3** | Scheduled fix; document workaround | Acknowledge 4 hours |
+| **P4** | Backlog; batch with changes | Next business day |
 
-- Unique ID, title, priority, affected service
-- Alert or ticket source
-- Business impact and technical symptoms
-- Chronological investigation steps
-- Commands and queries used (reproducible)
-- Root cause (or "under investigation" until known)
-- Resolution and validation
-- Prevention notes
-- Links to runbook, problem record, change record
+Full matrix: [sla-priority-matrix.md](sla-priority-matrix.md)
 
-Template examples: [../incidents/](../incidents/)
+## Detection sources
 
-## Priority assignment
+| Source | What L2 checks | Lab example |
+|---|---|---|
+| **Prometheus** | Firing alerts at `:19090/alerts` | `SupportApiDatabaseDown`, `SupportApiHighErrorRate` |
+| **Grafana** | Dashboard panels | Managed Services Operations Overview |
+| **Nginx** | Customer path `:18081` vs direct API `:18080` | Isolate proxy vs application fault |
+| **Spring logs** | `docker compose logs spring-support-api` | JDBC errors, simulation messages, stack traces |
+| **Docker Compose** | `docker compose ps`, health status | Unhealthy `msol-support-api`, stopped postgres |
+| **Customer report** | Ticket description, affected workflow | "Cannot load cases", "search is slow" |
 
-Follow [sla-priority-matrix.md](sla-priority-matrix.md). Re-assess priority as impact becomes clearer.
+## Triage checklist
 
-## Communication
+- [ ] Confirm alert or customer report is genuine (not false positive)
+- [ ] Assign priority using [sla-priority-matrix.md](sla-priority-matrix.md)
+- [ ] Identify affected service and customer impact scope
+- [ ] Check recent changes ([changes/](../changes/)) and deployments
+- [ ] Open or link incident record (INC-xxx)
+- [ ] Select runbook from [runbooks/](../runbooks/)
+- [ ] Notify incident commander if P1
 
-| Priority | Channels |
+## Investigation checklist
+
+- [ ] Compare Nginx (`http://localhost:18081/health`) vs API direct (`:18080/health`)
+- [ ] Query Prometheus: `up`, `support_api_database_up`, error rates
+- [ ] Review application logs (last 100–200 lines)
+- [ ] Check container status: `docker compose ps`
+- [ ] Review database connectivity if relevant
+- [ ] Document commands used (reproducible for handover)
+- [ ] Correlate timeline: alert time, change time, customer report time
+
+## Communication notes
+
+| Priority | Audience | Content |
+|---|---|---|
+| P1 | Customer liaison, service owner, L3 on standby | Impact, ETA unknown/known, next update time |
+| P2 | Customer liaison, internal team | Degraded function, workaround if any |
+| P3/P4 | Ticket update | Scope, planned resolution window |
+
+**Work notes (ServiceNow style):** Timestamp each action. Example: `09:14 — Alert SupportApiDatabaseDown confirmed. postgres container stopped. Starting runbook database-down.`
+
+## Resolution validation
+
+- [ ] `curl http://localhost:18081/health` → `status: UP`, `database: UP`
+- [ ] Prometheus alerts inactive for observation period (15–30 min P1/P2)
+- [ ] Customer-facing smoke test (`/tickets` returns data)
+- [ ] No new errors in application logs
+- [ ] Grafana panels returned to baseline
+
+## Post-incident review (P1/P2)
+
+Within 5 business days:
+
+1. Timeline reconstruction
+2. What went well / what did not
+3. Detection gap? Response gap?
+4. Open problem record if recurring
+5. Add items to [service-improvement-plan.md](service-improvement-plan.md)
+6. Blameless; focus on process and tooling
+
+## Incident records in this project
+
+| ID | Scenario | Priority | Runbook |
+|---|---|---|---|
+| [INC-001](../incidents/INC-001-database-down.md) | Database down | P1 | database-down |
+| [INC-002](../incidents/INC-002-application-500-errors.md) | HTTP 500 errors | P2 | application-500-errors |
+| [INC-003](../incidents/INC-003-container-restart-loop.md) | Bad env / unhealthy container | P2 | container-restart, failed-deployment |
+
+## ServiceNow mapping
+
+| ServiceNow field | Lab equivalent |
 |---|---|
-| P1 | Bridge call, status page, customer liaison |
-| P2 | Ticket updates, internal chat |
-| P3/P4 | Ticket updates |
+| **Incident** | `incidents/INC-xxx-*.md` |
+| **Priority** | P1–P4 in incident record |
+| **Assignment group** | Managed Services Platform Team / L2 Support Operations |
+| **Work notes** | Investigation steps, commands used (timestamped) |
+| **Resolution notes** | Resolution + validation summary |
+| **Related problem** | Link to `problem-records/PRB-xxx` |
+| **Related change** | Link to `changes/CHG-xxx` |
+| **Configuration item** | Support Portal API, PostgreSQL, Nginx |
 
 ## Simulated incidents (Milestone 5)
 
-The lab includes **controlled incident drills** for 2nd-level training. These are local-only, reversible, and do not delete volumes.
+Controlled drills for L2 training. Rules:
 
-### Simulation rules
+- Run **one** simulation at a time
+- Always run matching **restore script** before the next drill
+- HTTP 500 drill requires baseline health `UP` / database `UP`
 
-- Run only **one** incident simulation at a time.
-- Always run the matching **restore script** before starting the next simulation.
-- HTTP 500 simulation requires baseline health `status: UP` and `database: UP`. If a prior drill (e.g. database down) is still active, restore first — otherwise results will be misleading (Nginx 502/504 instead of application 500).
-
-### Drill workflow
-
-```
-Alert fires (Prometheus) → Triage (Grafana/dashboard) → Investigate (runbook)
-    → Mitigate (restore script) → Validate (health + metrics) → Document (incident record)
-```
-
-### Handling simulated incidents
-
-1. **Detect** — Confirm alert at http://localhost:19090/alerts before acting
-2. **Log** — Open or update incident record (INC-001, INC-002, or INC-003)
-3. **Investigate** — Use runbook commands; compare Nginx (`:18081`) vs direct API (`:18080`)
-4. **Mitigate** — Run matching restore script from `scripts/incidents/`
-5. **Validate** — Health `UP`, `support_api_database_up = 1`, alerts inactive
-6. **Document** — Complete incident record with actual commands used
-7. **Close** — Open problem record if recurring pattern identified
-
-### Drill scripts
-
-| Script | Purpose |
+| Script | Incident |
 |---|---|
-| `scripts/incidents/simulate-database-down.sh` | Stop postgres; trigger DB alert |
-| `scripts/incidents/restore-database-down.sh` | Restart postgres; validate recovery |
-| `scripts/incidents/simulate-http-500.sh` | Generate 5xx via `/simulate/http-500` |
-| `scripts/incidents/simulate-bad-env-restart-loop.sh` | Apply bad datasource override |
-| `scripts/incidents/restore-bad-env-restart-loop.sh` | Restore normal compose config |
-
-Simulation endpoints require `SUPPORT_SIMULATION_ENABLED=true` (set in Docker Compose only).
+| `scripts/incidents/simulate-database-down.sh` | INC-001 |
+| `scripts/incidents/simulate-http-500.sh` | INC-002 |
+| `scripts/incidents/simulate-bad-env-restart-loop.sh` | INC-003 |
 
 ## Closure criteria
 
 - [ ] Service restored and validated
 - [ ] Monitoring green for agreed observation period
-- [ ] Incident record complete
-- [ ] Customer comms sent (if required)
+- [ ] Incident record complete with evidence
+- [ ] Customer comms sent (P1/P2)
 - [ ] Problem record opened if recurring or unknown root cause
 - [ ] Post-incident review scheduled (P1/P2)
 
 ## Related documents
 
+- [itsm-artifact-map.md](itsm-artifact-map.md)
 - [problem-management-process.md](problem-management-process.md)
 - [escalation-model.md](escalation-model.md)
 - [../runbooks/](../runbooks/)
