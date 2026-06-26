@@ -4,53 +4,86 @@
 
 | Field | Value |
 |---|---|
-| **Symptom** | Container or pod repeatedly restarting (CrashLoopBackOff) |
-| **Typical alerts** | `PodRestarting`, `ContainerOOMKilled`, `LivenessProbeFailed` |
-| **Priority** | P2 (P1 if no healthy replicas) |
+| **Symptom** | Container unhealthy or repeatedly restarting |
+| **Typical alerts** | `SupportApiDown`, `SupportApiDatabaseDown`, `ContainerMemoryHigh` |
+| **Priority** | P2 (P1 if no healthy instances) |
 | **Estimated time** | 20–60 min |
+| **Lab simulation** | `./scripts/incidents/simulate-bad-env-restart-loop.sh` |
+
+## Detection
+
+- `docker compose ps` shows `unhealthy` or increasing restarts
+- Prometheus `up{job="spring-support-api"} == 0` or database metric `0`
+- Nginx returns 502/503 intermittently
+- Grafana panels show API down or database unhealthy
+
+## Impact check
+
+```bash
+docker compose ps
+curl -s http://localhost:18081/health | jq .
+curl -s 'http://localhost:19090/api/v1/query?query=up{job="spring-support-api"}' | jq .
+```
 
 ## Investigation steps
 
-1. **Count restarts** — `RESTARTS` column or pod events
-2. **Read exit reason** — OOMKilled, Error, Completed?
-3. **Check last logs before crash** — Stack trace, config error
-4. **Review resource limits** — CPU/memory requests and limits
-5. **Probe configuration** — Liveness killing slow-starting app?
-6. **Recent image or config change** — Correlate timeline
+1. **Count restarts** — `docker compose ps`, `docker inspect msol-support-api`
+2. **Read exit reason** — OOMKilled, Error, health check failure?
+3. **Check last logs** — `docker compose logs --tail=50 spring-support-api`
+4. **Review environment** — Recent config change? Wrong datasource URL?
+5. **Probe configuration** — Health check failing on slow start?
+6. **Resource limits** — Memory/CPU pressure from cAdvisor metrics
 
 ## Commands
 
 ```bash
-# Docker
 docker compose ps
-docker inspect spring-support-api --format '{{.State.ExitCode}} {{.State.OOMKilled}}'
+docker inspect msol-support-api --format '{{.State.Status}} {{.State.Health.Status}}'
 docker compose logs --tail=50 spring-support-api
-
-# Kubernetes
-kubectl get pods -l app=spring-support-api
-kubectl describe pod <pod-name>
-kubectl logs <pod-name> --previous
-kubectl get events --sort-by='.lastTimestamp'
+docker compose exec spring-support-api env | grep SPRING_DATASOURCE
+curl -s 'http://localhost:19090/api/v1/query?query=container_memory_usage_bytes{name=~".*msol-support-api.*"}' | jq .
 ```
 
-## Resolution paths
+## Safe restore
 
 | Root cause | Action |
 |---|---|
-| OOMKilled | Increase memory limit or fix leak; restart |
-| Liveness too aggressive | Adjust probe (CHG-005) |
-| Bad startup config | Fix env var (CHG-004) or rollback image |
-| Dependency not ready | Fix init order / readiness probe |
-| Application bug on boot | Rollback deployment |
+| Bad env config | `./scripts/incidents/restore-bad-env-restart-loop.sh` |
+| OOMKilled | Fix leak or increase limit; recreate container |
+| Liveness too aggressive | Apply CHG-005 health check fix |
+| Dependency not ready | Ensure postgres healthy first |
+| Application bug on boot | Rollback image/config |
+
+```bash
+# Restore normal config after bad-env drill
+docker compose -f docker-compose.yml up -d --force-recreate spring-support-api
+```
 
 ## Validation
 
-- [ ] Pod/container `Running` with 0 restarts for 30 min
-- [ ] Readiness probe passing
-- [ ] Traffic served normally
+```bash
+docker compose ps                              # healthy, 0 restarts
+curl -s http://localhost:18081/health | jq .  # UP / UP
+curl -s 'http://localhost:19090/api/v1/query?query=support_api_database_up' | jq .
+```
+
+- [ ] Container healthy for 30 min
+- [ ] Customer path serves traffic normally
+- [ ] Incident record updated
+
+## Escalation
+
+Escalate if: multiple replicas failing, data loss risk, or no progress in 2 hours (P2).
+
+## Prevention
+
+- Env var change checklist with memory/datasource review (PRB-002, CHG-004)
+- Separate readiness from liveness (CHG-005)
+- Monitor container memory on Grafana dashboard
+- Staging validation before production config changes
 
 ## Related records
 
 - Incident: [../incidents/INC-003-container-restart-loop.md](../incidents/INC-003-container-restart-loop.md)
 - Problem: [../problem-records/PRB-002-repeated-container-restarts.md](../problem-records/PRB-002-repeated-container-restarts.md)
-- Change: [../changes/CHG-005-improve-health-check.md](../changes/CHG-005-improve-health-check.md)
+- Restore: [../scripts/incidents/restore-bad-env-restart-loop.sh](../scripts/incidents/restore-bad-env-restart-loop.sh)

@@ -49,6 +49,39 @@ Follow [sla-priority-matrix.md](sla-priority-matrix.md). Re-assess priority as i
 | P2 | Ticket updates, internal chat |
 | P3/P4 | Ticket updates |
 
+## Simulated incidents (Milestone 5)
+
+The lab includes **controlled incident drills** for 2nd-level training. These are local-only, reversible, and do not delete volumes.
+
+### Drill workflow
+
+```
+Alert fires (Prometheus) → Triage (Grafana/dashboard) → Investigate (runbook)
+    → Mitigate (restore script) → Validate (health + metrics) → Document (incident record)
+```
+
+### Handling simulated incidents
+
+1. **Detect** — Confirm alert at http://localhost:19090/alerts before acting
+2. **Log** — Open or update incident record (INC-001, INC-002, or INC-003)
+3. **Investigate** — Use runbook commands; compare Nginx (`:18081`) vs direct API (`:18080`)
+4. **Mitigate** — Run matching restore script from `scripts/incidents/`
+5. **Validate** — Health `UP`, `support_api_database_up = 1`, alerts inactive
+6. **Document** — Complete incident record with actual commands used
+7. **Close** — Open problem record if recurring pattern identified
+
+### Drill scripts
+
+| Script | Purpose |
+|---|---|
+| `scripts/incidents/simulate-database-down.sh` | Stop postgres; trigger DB alert |
+| `scripts/incidents/restore-database-down.sh` | Restart postgres; validate recovery |
+| `scripts/incidents/simulate-http-500.sh` | Generate 5xx via `/simulate/http-500` |
+| `scripts/incidents/simulate-bad-env-restart-loop.sh` | Apply bad datasource override |
+| `scripts/incidents/restore-bad-env-restart-loop.sh` | Restore normal compose config |
+
+Simulation endpoints require `SUPPORT_SIMULATION_ENABLED=true` (set in Docker Compose only).
+
 ## Closure criteria
 
 - [ ] Service restored and validated

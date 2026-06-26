@@ -6,7 +6,7 @@ INC-001
 
 ## Title
 
-PostgreSQL database unreachable — Support Portal API fully degraded
+PostgreSQL database unreachable — Support Portal API degraded
 
 ## Priority
 
@@ -18,61 +18,68 @@ Support Portal API (all endpoints requiring persistence)
 
 ## Alert Source
 
-Prometheus alert: `PostgresDown`  
-Grafana dashboard: Service Overview — Database panel red  
-Customer ticket: #4521 — "Cannot load support cases"
+Prometheus alert: `SupportApiDatabaseDown` (critical)  
+Grafana dashboard: Managed Services Operations Overview — Database Health panel  
+Lab trigger: `./scripts/incidents/simulate-database-down.sh`
 
 ## Impact
 
-- 100% of API write operations failing
-- Support agents unable to open or update cases
-- Estimated 120 active users affected during business hours
-- SLA availability at risk for monthly window
+- Customer-facing API returns `status: DEGRADED`, `database: DOWN` on `/health`
+- Ticket list and create operations fail when database is required
+- `support_api_database_up` metric drops to `0`
+- Nginx proxy at `http://localhost:18081` forwards errors to support agents
+- SLA availability at risk if prolonged in production
 
 ## Symptoms
 
-- `/actuator/health` returns `DOWN` with database component failed
-- Application logs: `org.postgresql.util.PSQLException: Connection refused`
-- Nginx returning 503 to clients
-- Prometheus: `up{job="postgres"}` = 0
+- `curl http://localhost:18081/health` → `"status":"DEGRADED","database":"DOWN"`
+- `curl http://localhost:18080/health` → same (direct API troubleshooting path)
+- Prometheus: `support_api_database_up == 0`
+- `docker compose ps` → `msol-postgres` stopped or unhealthy
+- Application logs: `Database health check failed`, JDBC connection errors
 
 ## Investigation Steps
 
-1. Confirmed alert at 09:14 UTC; opened incident bridge for P1
-2. Checked `docker compose ps` — postgres container in `Exit 137` state
-3. Reviewed postgres logs — OOM kill followed by failed restart
-4. Verified disk on host: `/var/lib/postgresql` mount at 98% capacity
-5. Ruled out application-side misconfiguration — connection string unchanged
-6. Checked recent changes — no deployment in last 24h; backup job ran at 02:00
+1. Confirmed `SupportApiDatabaseDown` alert at Prometheus http://localhost:19090/alerts
+2. Checked customer impact via Nginx: `curl -s http://localhost:18081/health | jq .`
+3. Verified direct API path: `curl -s http://localhost:18080/health | jq .`
+4. Inspected container state: `docker compose ps`
+5. Reviewed PostgreSQL logs: `docker compose logs --tail=50 postgres`
+6. Queried metric: `curl -s 'http://localhost:19090/api/v1/query?query=support_api_database_up'`
+7. Ruled out application code change — incident started when database container stopped
 
 ## Commands Used
 
 ```bash
 docker compose ps
-docker compose logs --tail=150 postgres
-df -h /var/lib/postgresql
-pg_isready -h localhost -p 5432
-docker compose logs --tail=50 spring-support-api | grep -i postgres
+docker compose logs --tail=50 postgres
+curl -s http://localhost:18081/health | jq .
+curl -s http://localhost:18080/health | jq .
+curl -s 'http://localhost:19090/api/v1/query?query=support_api_database_up' | jq .
+curl -s http://localhost:19090/alerts | grep SupportApiDatabaseDown
 ```
 
 ## Root Cause
 
-PostgreSQL container terminated due to **host disk exhaustion** (98% full). WAL and log growth prevented clean restart; container entered crash loop until disk space reclaimed.
+PostgreSQL container (`msol-postgres`) was stopped during a controlled lab drill simulating database outage. The Support Portal API could not reach `jdbc:postgresql://postgres:5432/supportdb`, causing health degradation and `support_api_database_up = 0`.
+
+In a production scenario, root causes include: container crash, disk exhaustion, network partition, or cloud provider outage.
 
 ## Resolution
 
-1. Identified large orphaned backup files in local volume (non-production drill environment)
-2. Removed expired backup archives per retention policy (with team lead approval)
-3. Restarted postgres container: `docker compose up -d postgres`
-4. Validated connectivity with `pg_isready` and application health endpoint
-5. Monitored error rate for 30 minutes — returned to baseline
+1. Restored PostgreSQL: `docker compose start postgres` (or `./scripts/incidents/restore-database-down.sh`)
+2. Waited 15s for `pg_isready` health check to pass
+3. Validated health: `curl -s http://localhost:18081/health | jq .` → `status: UP`, `database: UP`
+4. Confirmed metric recovery: `support_api_database_up = 1`
+5. Verified alert returned to inactive at http://localhost:19090/alerts
+6. Observed stable state for 15 minutes before closing incident
 
 ## Prevention
 
-- Implement disk usage alerting before 85% threshold
-- Enforce backup retention cleanup automation
-- Schedule capacity review in service improvement plan
-- Open problem record PRB-001 for related timeout patterns under load
+- Monitor `support_api_database_up` and disk usage proactively
+- Document restore procedure in runbook; test backup/restore quarterly
+- Open problem record PRB-001 for recurring timeout patterns under load
+- Add capacity alerting before disk reaches 85% (service improvement plan)
 
 ## Related Runbook
 
@@ -84,4 +91,4 @@ PostgreSQL container terminated due to **host disk exhaustion** (98% full). WAL 
 
 ## Related Change Record
 
-None for immediate incident. Follow-up monitoring change planned: CHG-002 (disk alert — future).
+None for immediate restore. Follow-up: CHG-002 (monitoring threshold tuning).

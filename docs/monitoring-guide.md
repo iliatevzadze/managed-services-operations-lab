@@ -160,13 +160,31 @@ curl -s 'http://localhost:19090/api/v1/query?query=support_api_database_up' | jq
 | Alerts always firing | Open http://localhost:19090/alerts; verify expression and `for` duration |
 | Dashboard panels empty | Confirm Prometheus datasource healthy; check time range (last 1h) |
 
+## Verifying alerts during incident simulations (Milestone 5)
+
+Run drills from `scripts/incidents/` with the stack up. After each drill:
+
+```bash
+curl -s http://localhost:19090/api/v1/alerts | jq '.data.alerts[] | {alertname: .labels.alertname, state: .state}'
+# Or: http://localhost:19090/alerts
+```
+
+| Drill | Expected alert(s) | Key metric |
+|---|---|---|
+| `simulate-database-down.sh` | `SupportApiDatabaseDown` (critical) | `support_api_database_up == 0` |
+| `simulate-http-500.sh` | `SupportApiHighErrorRate` (warning, after 2m) | 5xx rate > 0 |
+| `simulate-bad-env-restart-loop.sh` | `SupportApiDatabaseDown`, container unhealthy | `support_api_database_up == 0` |
+
+After restore scripts, confirm alerts return to **inactive** and Grafana panels recover.
+
 ## Roadmap
 
 | Item | Milestone |
 |---|---|
 | Monitoring stack | M3 (done) |
 | Alert rules + Grafana dashboard | M4 (done) |
-| Incident simulation drills | M5 |
+| Incident simulation drills | M5 (done) |
+| SQL troubleshooting scenarios | M6 |
 
 ## Related documents
 

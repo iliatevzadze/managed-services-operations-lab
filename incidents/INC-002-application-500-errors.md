@@ -6,7 +6,7 @@ INC-002
 
 ## Title
 
-Elevated HTTP 500 errors after application release v1.4.2
+Elevated HTTP 500 errors on Support Portal API
 
 ## Priority
 
@@ -14,64 +14,73 @@ P2 — High
 
 ## Affected Service
 
-Support Portal API — `/api/v1/cases` and `/api/v1/search` endpoints
+Support Portal API — simulated error endpoint and customer-facing paths via Nginx
 
 ## Alert Source
 
-Prometheus alert: `HighErrorRate` (5xx > 5% for 5 min)  
-Internal monitoring: Grafana — HTTP Error Rate panel  
-Ticket: #4588 — intermittent errors loading case list
+Prometheus alert: `SupportApiHighErrorRate` (warning)  
+Grafana dashboard: Managed Services Operations Overview — HTTP 5xx Error Rate panel  
+Lab trigger: `./scripts/incidents/simulate-http-500.sh`
 
 ## Impact
 
-- ~35% of case list requests returning 500
-- Search functionality degraded; create/update still working
-- No data loss; customer workaround: retry or refresh
-- Approx. 40 support agents affected
+- Repeated HTTP 500 responses on `/simulate/http-500` (lab) or production endpoints (real scenario)
+- Customer agents see errors when loading support workflows
+- `http_server_requests_seconds_count{status="500"}` increases
+- No data loss; degraded experience until errors stop or rollback completes
+- SLA error budget consumption if sustained
 
 ## Symptoms
 
-- Spike in `http_server_requests_seconds_count{status="500"}` after 14:02 UTC deploy
-- Logs: `NullPointerException` in `CaseSearchService.buildFilter()` line 87
-- Database metrics normal — ruled out DB as primary cause
-- Only pods on revision `spring-support-api-7d8f9c` affected
+- Prometheus: `sum(rate(http_server_requests_seconds_count{job="spring-support-api",status=~"5.."}[2m])) > 0`
+- Application logs: `Incident simulation HTTP 500` or stack traces for real defects
+- `curl -s -o /dev/null -w "%{http_code}" http://localhost:18081/simulate/http-500` → `500`
+- JSON error body: `{"error":"SIMULATION_ERROR","message":"Simulated HTTP 500..."}`
+- Grafana 5xx panel shows spike
 
 ## Investigation Steps
 
-1. Correlated error spike start with deployment timestamp (14:02 UTC)
-2. Compared error rate between old and new replicas — new revision only
-3. Pulled stack traces from application logs — NPE in search filter builder
-4. Reproduced with curl against new pod — confirmed on optional filter param
-5. Checked change record for v1.4.2 — feature flag for advanced search enabled
-6. Consulted with dev on-call — known edge case when `status` param omitted
+1. Confirmed `SupportApiHighErrorRate` pending/firing at http://localhost:19090/alerts
+2. Quantified 5xx rate in Prometheus expression browser
+3. Checked Grafana HTTP 5xx Error Rate panel at http://localhost:13003
+4. Reviewed application logs: `docker compose logs --tail=100 spring-support-api | grep -i error`
+5. Tested customer path vs direct API:
+   - `curl -s http://localhost:18081/simulate/http-500`
+   - `curl -s http://localhost:18080/simulate/http-500`
+6. Checked recent deployments and change records for correlation
+7. Ruled out database issue: `support_api_database_up == 1`
 
 ## Commands Used
 
 ```bash
-kubectl get pods -l app=spring-support-api -o wide
-kubectl logs -l app=spring-support-api --tail=300 | grep -A5 NullPointerException
-curl -s -o /dev/null -w "%{http_code}" "https://api.example.com/api/v1/search"
-kubectl rollout history deployment/spring-support-api
+docker compose logs --tail=100 spring-support-api | grep -i error
+curl -s -o /dev/null -w "%{http_code}\n" http://localhost:18081/simulate/http-500
+curl -s 'http://localhost:19090/api/v1/query?query=sum(rate(http_server_requests_seconds_count{job="spring-support-api",status=~"5.."}[2m]))' | jq .
+curl -s http://localhost:19090/alerts | grep SupportApiHighErrorRate
+curl -s http://localhost:18081/health | jq .
 ```
 
 ## Root Cause
 
-Release **v1.4.2** introduced a regression in `CaseSearchService` when the optional `status` query parameter is absent. Unhandled null dereference causes 500 on affected search requests.
+**Lab drill:** Controlled requests to `GET /simulate/http-500` with `SUPPORT_SIMULATION_ENABLED=true` deliberately return HTTP 500 for incident training.
+
+**Production analogue:** Application regression (e.g. release v1.4.2 NPE on optional query parameter) causing unhandled exceptions on customer endpoints.
 
 ## Resolution
 
-1. Decision: rollback preferred over hotfix due to active customer impact
-2. Executed `kubectl rollout undo deployment/spring-support-api`
-3. Confirmed rollout complete on revision v1.4.1
-4. Validated 5xx rate below 0.1% within 10 minutes
-5. Customer comms sent — issue resolved, retry recommended during incident
+1. **Lab:** Stop sending simulation requests; 5xx rate returns to zero within 2–5 minutes
+2. **Production analogue:** Rollback bad release (CHG-003) or hotfix with dev approval
+3. Validated 5xx rate below threshold: Prometheus query returns `0`
+4. Confirmed alert inactive at http://localhost:19090/alerts
+5. Smoke-tested critical endpoints: `curl -s http://localhost:18081/tickets | jq 'length'`
+6. Updated incident record and notified stakeholders (P2)
 
 ## Prevention
 
-- Add integration test for search without optional parameters
-- Strengthen staging smoke tests before production promote
-- Open problem record PRB-003 for repeated 500 patterns
-- Document rollback in CHG-003
+- Strengthen pre-production smoke tests for all API endpoints
+- Gate releases on staging error-rate soak (PRB-003)
+- Keep simulation endpoints disabled in production (`support.simulation.enabled=false`)
+- Document rollback path in change management process
 
 ## Related Runbook
 

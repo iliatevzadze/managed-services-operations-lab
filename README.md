@@ -199,18 +199,36 @@ See [docs/local-setup-guide.md](docs/local-setup-guide.md) for details.
 
 ---
 
+## Simulated incidents (Milestone 5)
+
+Controlled drills demonstrate **alert-driven 2nd-level incident response**: detect via Prometheus, investigate with runbooks, restore safely, document in incident records.
+
+**Prerequisites:** full stack running (`docker compose up -d --build`)
+
+| Drill | Simulate | Restore | Expected alert |
+|---|---|---|---|
+| Database down | `./scripts/incidents/simulate-database-down.sh` | `./scripts/incidents/restore-database-down.sh` | `SupportApiDatabaseDown` |
+| HTTP 500 errors | `./scripts/incidents/simulate-http-500.sh` | Stop requests; wait for rate decay | `SupportApiHighErrorRate` |
+| Bad env / restart loop | `./scripts/incidents/simulate-bad-env-restart-loop.sh` | `./scripts/incidents/restore-bad-env-restart-loop.sh` | `SupportApiDatabaseDown`, unhealthy container |
+
+Documented incidents: [incidents/INC-001-database-down.md](incidents/INC-001-database-down.md), [INC-002](incidents/INC-002-application-500-errors.md), [INC-003](incidents/INC-003-container-restart-loop.md)
+
+Verify alerts during drill: http://localhost:19090/alerts
+
+---
+
 ## Planned incident simulations
 
-| ID | Scenario | Primary skill area |
+| ID | Scenario | Status |
 |---|---|---|
-| INC-001 | Database unavailable | DB connectivity, backup awareness, escalation |
-| INC-002 | Application HTTP 500 errors | Log analysis, recent changes, rollback decision |
-| INC-003 | Container restart loop | Health checks, resource limits, deployment validation |
-| INC-004 | High CPU on application pod | Metrics, profiling, scaling vs. fix |
-| INC-005 | Slow SQL query degrading API | Query plans, indexing, change record follow-up |
-| INC-006 | Failed deployment | Rollback, CI/CD validation, change management |
-| INC-007 | Monitoring alert threshold gap | Alert tuning, problem management |
-| INC-008 | Backup failure before maintenance | Backup/restore runbook, risk communication |
+| INC-001 | Database unavailable | **Drill available (M5)** |
+| INC-002 | Application HTTP 500 errors | **Drill available (M5)** |
+| INC-003 | Container restart loop / bad config | **Drill available (M5)** |
+| INC-004 | High CPU on application pod | Planned (M6+) |
+| INC-005 | Slow SQL query degrading API | Planned (M6) |
+| INC-006 | Failed deployment | Partially covered by INC-003 drill |
+| INC-007 | Monitoring alert threshold gap | Documented (PRB-004) |
+| INC-008 | Backup failure before maintenance | Documented |
 
 Example incident records: [incidents/](incidents/)
 
@@ -251,10 +269,11 @@ Example incident records: [incidents/](incidents/)
 | M1 | Spring Boot support API, Flyway schema, seeded tickets, tests | Completed |
 | M2 | Docker Compose stack: Nginx → API → PostgreSQL, health checks, backup/restore | Completed |
 | **M3** | Monitoring stack: Prometheus, Grafana, Alertmanager, Node Exporter, cAdvisor | Completed |
-| **M4** | Prometheus alert rules, Grafana dashboard, `support_api_database_up` metric | **Completed** |
-| M5 | Realistic failure injection and incident simulations | Planned |
-| M6 | Kubernetes manifests, deployment and rollback scenarios | Planned |
-| M7 | CI/CD workflows, automated validation | Planned |
+| **M4** | Prometheus alert rules, Grafana dashboard, `support_api_database_up` metric | Completed |
+| **M5** | Controlled incident simulations, drill scripts, documented INC-001–003 | **Completed** |
+| M6 | SQL troubleshooting scenarios | Planned |
+| M7 | Kubernetes manifests, deployment and rollback scenarios | Planned |
+| M8 | CI/CD workflows, automated validation | Planned |
 
 ---
 

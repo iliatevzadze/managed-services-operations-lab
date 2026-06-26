@@ -1,0 +1,13 @@
+# Managed Services Operations Lab — Incident-only Compose override (Milestone 5)
+#
+# Simulates a bad deployment / misconfigured environment: wrong database name.
+# Use with the base stack:
+#   docker compose -f docker-compose.yml -f docker-compose.incident-bad-env.yml up -d --force-recreate spring-support-api
+#
+# Restore normal configuration:
+#   ./scripts/incidents/restore-bad-env-restart-loop.sh
+
+services:
+  spring-support-api:
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/wrongdb

@@ -8,8 +8,9 @@
 | M1 | Spring Boot API — validate with `mvn test` | Completed |
 | **M2** | Docker Compose stack: Nginx → API → PostgreSQL | Completed |
 | **M3** | Monitoring stack: Prometheus, Grafana, exporters | Completed |
-| **M4** | Alert rules, Grafana dashboard, database health metric | **Available now** |
-| M5+ | Failure injection, K8s, CI/CD | Planned |
+| **M4** | Alert rules, Grafana dashboard, database health metric | Completed |
+| **M5** | Controlled incident simulations and drill scripts | **Available now** |
+| M6+ | SQL troubleshooting, K8s, CI/CD | Planned |
 
 ## Prerequisites
 
@@ -158,6 +159,45 @@ docker compose down -v    # stop and remove the database volume (fresh start)
 - [ ] Grafana login works at http://localhost:13003 (`admin` / `admin`)
 - [ ] Alertmanager UI reachable at http://localhost:19093
 - [ ] `up{job="spring-support-api"}` returns 1 in Prometheus
+
+- [ ] All 8 dashboard panels show values (may need a few scrape cycles)
+
+## Milestone 5 — incident simulation drills
+
+**Prerequisites:** full stack running (`docker compose up -d --build`)
+
+### Database down (INC-001)
+
+```bash
+./scripts/incidents/simulate-database-down.sh
+# Check http://localhost:19090/alerts — SupportApiDatabaseDown
+./scripts/incidents/restore-database-down.sh
+```
+
+### HTTP 500 errors (INC-002)
+
+```bash
+./scripts/incidents/simulate-http-500.sh
+# Wait up to 2m — SupportApiHighErrorRate may fire
+# Alert clears when 5xx rate returns to 0
+```
+
+### Bad env / container unhealthy (INC-003)
+
+```bash
+./scripts/incidents/simulate-bad-env-restart-loop.sh
+docker compose ps   # msol-support-api unhealthy
+./scripts/incidents/restore-bad-env-restart-loop.sh
+```
+
+## Verification checklist (M5)
+
+- [ ] Database drill: health shows `DEGRADED` then recovers to `UP`
+- [ ] HTTP 500 drill: `/simulate/http-500` returns 500 with JSON error body
+- [ ] Bad-env drill: container unhealthy with wrong datasource URL
+- [ ] Restore scripts return stack to healthy state
+- [ ] Incident records INC-001–003 match commands used in drill
+- [ ] Alerts visible at http://localhost:19090/alerts during drill
 
 ## Verification checklist (M1, no Docker)
 

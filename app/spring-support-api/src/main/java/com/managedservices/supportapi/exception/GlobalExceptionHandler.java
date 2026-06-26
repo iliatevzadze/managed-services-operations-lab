@@ -22,6 +22,21 @@ public class GlobalExceptionHandler {
                 .body(ErrorResponse.of("NOT_FOUND", ex.getMessage()));
     }
 
+    @ExceptionHandler(SimulationDisabledException.class)
+    public ResponseEntity<ErrorResponse> handleSimulationDisabled(SimulationDisabledException ex) {
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(ErrorResponse.of("SIMULATION_DISABLED", ex.getMessage()));
+    }
+
+    @ExceptionHandler(SimulationHttp500Exception.class)
+    public ResponseEntity<ErrorResponse> handleSimulationHttp500(SimulationHttp500Exception ex) {
+        log.error("Incident simulation HTTP 500: {}", ex.getMessage());
+        return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(ErrorResponse.of("SIMULATION_ERROR", ex.getMessage()));
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidation(MethodArgumentNotValidException ex) {
         List<String> details = ex.getBindingResult().getFieldErrors().stream()
