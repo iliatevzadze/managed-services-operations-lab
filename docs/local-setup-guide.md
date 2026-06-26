@@ -6,12 +6,14 @@
 |---|---|---|
 | M0 | Clone repo, review documentation | Completed |
 | M1 | Spring Boot API — validate with `mvn test` | Completed |
-| **M2** | Docker Compose stack: Nginx → API → PostgreSQL | **Available now** |
-| M3+ | Monitoring, failure injection, K8s | Planned |
+| **M2** | Docker Compose stack: Nginx → API → PostgreSQL | Completed |
+| **M3** | Monitoring stack: Prometheus, Grafana, exporters | Completed |
+| **M4** | Alert rules, Grafana dashboard, database health metric | **Available now** |
+| M5+ | Failure injection, K8s, CI/CD | Planned |
 
 ## Prerequisites
 
-**Milestone 2 (full stack):**
+**Milestone 2+ (full stack):**
 
 - **Docker** and **Docker Compose v2**
 - **curl** and **jq** — endpoint verification
@@ -101,7 +103,29 @@ curl -s http://localhost:18080/actuator/prometheus | head   # app metrics expose
 curl -s 'http://localhost:19090/api/v1/query?query=up' | jq '.data.result[] | {job:.metric.job, up:.value[1]}'
 ```
 
-Then open http://localhost:19090/targets — every job (`prometheus`, `spring-support-api`, `node-exporter`, `cadvisor`) should be **UP**. See [monitoring-guide.md](monitoring-guide.md) for useful queries.
+Then open http://localhost:19090/targets — every job should be **UP**. See [monitoring-guide.md](monitoring-guide.md) for useful queries.
+
+### Monitoring alerts and dashboard (Milestone 4)
+
+```bash
+# Validate Prometheus alert rules
+docker compose exec prometheus promtool check rules /etc/prometheus/rules/managed-services-alerts.yml
+curl -s http://localhost:19090/api/v1/rules | jq '.data.groups[].name'
+
+# Custom database health metric (updated on each /health check)
+curl -s 'http://localhost:19090/api/v1/query?query=support_api_database_up' | jq .
+
+# Grafana dashboard: http://localhost:13003 → Dashboards → Managed Services
+#   "Managed Services Operations Overview"
+```
+
+## Verification checklist (M4, alerts and dashboard)
+
+- [ ] `promtool check rules` passes for `managed-services-alerts.yml`
+- [ ] http://localhost:19090/alerts lists 7 rules (inactive when healthy)
+- [ ] `support_api_database_up` returns `1` in Prometheus
+- [ ] Grafana dashboard **Managed Services Operations Overview** loads with data
+- [ ] All 8 dashboard panels show values (may need a few scrape cycles)
 
 ### Inspect
 

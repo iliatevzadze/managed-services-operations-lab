@@ -2,7 +2,10 @@ package com.managedservices.supportapi.service;
 
 import com.managedservices.supportapi.dto.HealthResponse;
 import com.managedservices.supportapi.repository.SupportTicketRepository;
+import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.MeterRegistry;
 import java.time.Instant;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,14 +21,20 @@ public class HealthService {
     private final JdbcTemplate jdbcTemplate;
     private final SupportTicketRepository ticketRepository;
     private final String serviceName;
+    private final AtomicInteger databaseUpMetric = new AtomicInteger(0);
 
     public HealthService(
             JdbcTemplate jdbcTemplate,
             SupportTicketRepository ticketRepository,
+            MeterRegistry meterRegistry,
             @Value("${spring.application.name}") String serviceName) {
         this.jdbcTemplate = jdbcTemplate;
         this.ticketRepository = ticketRepository;
         this.serviceName = serviceName;
+
+        Gauge.builder("support_api_database_up", databaseUpMetric, AtomicInteger::get)
+                .description("Support API database connectivity (1=up, 0=down)")
+                .register(meterRegistry);
     }
 
     public HealthResponse checkHealth() {
@@ -51,9 +60,12 @@ public class HealthService {
     private boolean isDatabaseUp() {
         try {
             Integer result = jdbcTemplate.queryForObject("SELECT 1", Integer.class);
-            return result != null && result == 1;
+            boolean up = result != null && result == 1;
+            databaseUpMetric.set(up ? 1 : 0);
+            return up;
         } catch (DataAccessException ex) {
             log.warn("Database health check failed: {}", ex.getMessage());
+            databaseUpMetric.set(0);
             return false;
         }
     }

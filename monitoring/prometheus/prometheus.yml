@@ -1,19 +1,18 @@
-# Managed Services Operations Lab — Prometheus configuration (Milestone 3)
-# Proactive monitoring for the containerized customer application stack.
-# Alert rules are intentionally absent here; they are added in Milestone 4.
+# Managed Services Operations Lab — Prometheus configuration (Milestone 4)
+# Proactive monitoring and alert rules for the customer application stack.
 
 global:
   scrape_interval: 15s
   evaluation_interval: 15s
 
-# Alertmanager target is wired now; rule files come in Milestone 4.
 alerting:
   alertmanagers:
     - static_configs:
         - targets:
             - "alertmanager:9093"
 
-# rule_files: []   # Milestone 4 will add alert rules
+rule_files:
+  - /etc/prometheus/rules/*.yml
 
 scrape_configs:
   # Prometheus self-monitoring

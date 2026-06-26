@@ -142,24 +142,41 @@ docker compose ps
 | Tickets via proxy | http://localhost:18081/tickets |
 | PostgreSQL host access | localhost:15434 |
 
-**Monitoring URLs (Milestone 3):**
+**Monitoring URLs (Milestone 3–4):**
 
 | Target | URL | Notes |
 |---|---|---|
-| Prometheus | http://localhost:19090 | Metrics and target status (`/targets`) |
-| Grafana | http://localhost:13003 | Login `admin` / `admin` (dashboards in M4) |
-| Alertmanager | http://localhost:19093 | Placeholder receiver (rules in M4) |
+| Prometheus | http://localhost:19090 | Targets (`/targets`), alerts (`/alerts`), rules |
+| Grafana | http://localhost:13003 | Login `admin` / `admin`; dashboard in **Managed Services** folder |
+| Alertmanager | http://localhost:19093 | Receives alerts from Prometheus |
 | Node Exporter | http://localhost:19100/metrics | Host metrics |
 | cAdvisor | http://localhost:18084 | Container metrics |
-| App metrics endpoint | http://localhost:18080/actuator/prometheus | Scraped by Prometheus |
+| App metrics endpoint | http://localhost:18080/actuator/prometheus | Includes `support_api_database_up` |
 
-**Verify monitoring:**
+**Grafana dashboard:** Managed Services Operations Overview — http://localhost:13003 (Dashboards → Managed Services)
+
+**Alert rules (summary):**
+
+| Alert | Severity | Trigger |
+|---|---|---|
+| SupportApiDown | critical | Application scrape target down |
+| SupportApiDatabaseDown | critical | `support_api_database_up == 0` |
+| SupportApiHighErrorRate | warning | HTTP 5xx rate > 0 |
+| SupportApiHighCpuUsage | warning | CPU > 80% |
+| ContainerMemoryHigh | warning | API container memory > 500 MB |
+| NodeExporterDown / CadvisorDown | warning | Metrics collector unavailable |
+
+**Verify monitoring (Milestone 4):**
 
 ```bash
+docker compose up -d --build
 docker compose ps
-curl -s http://localhost:19090/-/ready                 # Prometheus ready
-curl -s 'http://localhost:19090/api/v1/query?query=up' # all targets up
-# Then open http://localhost:19090/targets — every job should be UP
+curl -s http://localhost:19090/-/ready
+curl -s http://localhost:19090/api/v1/rules | jq '.data.groups[].name'    # managed-services-alerts
+curl -s 'http://localhost:19090/api/v1/query?query=support_api_database_up' | jq .
+docker compose exec prometheus promtool check rules /etc/prometheus/rules/managed-services-alerts.yml
+# Open http://localhost:19090/targets — all jobs UP
+# Open http://localhost:13003 — Managed Services Operations Overview dashboard
 ```
 
 **Stop the stack:**
@@ -233,8 +250,8 @@ Example incident records: [incidents/](incidents/)
 | M0 | Repository foundation, README, documentation and record skeletons | Completed |
 | M1 | Spring Boot support API, Flyway schema, seeded tickets, tests | Completed |
 | M2 | Docker Compose stack: Nginx → API → PostgreSQL, health checks, backup/restore | Completed |
-| **M3** | Monitoring stack: Prometheus, Grafana, Alertmanager, Node Exporter, cAdvisor | **Completed** |
-| M4 | Alert rules, Alertmanager routing, and Grafana dashboards | Planned |
+| **M3** | Monitoring stack: Prometheus, Grafana, Alertmanager, Node Exporter, cAdvisor | Completed |
+| **M4** | Prometheus alert rules, Grafana dashboard, `support_api_database_up` metric | **Completed** |
 | M5 | Realistic failure injection and incident simulations | Planned |
 | M6 | Kubernetes manifests, deployment and rollback scenarios | Planned |
 | M7 | CI/CD workflows, automated validation | Planned |

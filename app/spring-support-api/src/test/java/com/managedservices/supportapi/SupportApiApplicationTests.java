@@ -1,9 +1,13 @@
 package com.managedservices.supportapi;
 
 import static org.hamcrest.Matchers.hasSize;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import io.micrometer.core.instrument.MeterRegistry;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +24,9 @@ class SupportApiApplicationTests {
     @Autowired
     private MockMvc mockMvc;
 
+    @Autowired
+    private MeterRegistry meterRegistry;
+
     @Test
     void contextLoads() {
     }
@@ -33,6 +40,15 @@ class SupportApiApplicationTests {
                 .andExpect(jsonPath("$.database").value("UP"))
                 .andExpect(jsonPath("$.ticketCount").value(4))
                 .andExpect(jsonPath("$.timestamp").exists());
+    }
+
+    @Test
+    void databaseHealthMetricReportsUpWhenDatabaseIsAvailable() throws Exception {
+        mockMvc.perform(get("/health")).andExpect(status().isOk());
+
+        var gauge = meterRegistry.find("support_api_database_up").gauge();
+        assertNotNull(gauge);
+        assertEquals(1.0, gauge.value());
     }
 
     @Test

@@ -2,27 +2,27 @@
 
 ## Objectives
 
-Monitoring in this lab supports **proactive 2nd-level support operations**: detect customer-impacting issues early, give the engineer enough context to investigate, and build toward alerts that reduce noise without hiding real outages.
+Monitoring in this lab supports **proactive 2nd-level support operations**: detect customer-impacting issues early, give the engineer enough context to investigate, and respond to alerts with runbook discipline.
 
-Milestone 3 adds a working local monitoring stack. **Alert rules and Grafana dashboards are intentionally not included yet** — they arrive in Milestone 4.
+Milestone 4 adds **Prometheus alert rules** and the first **Grafana dashboard** for alert-driven incident response and service reliability visibility.
 
-## Stack overview (Milestone 3)
+## Stack overview
 
 | Component | Container | Host port | Role |
 |---|---|---|---|
-| Prometheus | `msol-prometheus` | 19090 | Scrapes and stores metrics; evaluates rules (rules added in M4) |
-| Grafana | `msol-grafana` | 13003 | Visualizes Prometheus data (dashboards added in M4) |
-| Alertmanager | `msol-alertmanager` | 19093 | Receives future alerts; local placeholder receiver only |
+| Prometheus | `msol-prometheus` | 19090 | Scrapes metrics, evaluates alert rules, sends alerts to Alertmanager |
+| Grafana | `msol-grafana` | 13003 | Visualizes Prometheus data; provisioned dashboard |
+| Alertmanager | `msol-alertmanager` | 19093 | Receives alerts from Prometheus (local placeholder receiver) |
 | Node Exporter | `msol-node-exporter` | 19100 | Host metrics: CPU, memory, disk, network |
 | cAdvisor | `msol-cadvisor` | 18084 | Per-container metrics: CPU, memory, restarts |
 
 ### What each component gives 2nd-level support
 
-- **Prometheus** — single place to query the health and behavior of the customer application, host, and containers. The investigation starting point.
-- **Grafana** — visual correlation across application, host, and container metrics (dashboards in M4).
-- **Alertmanager** — wired now so the alerting path exists; routing and receivers are completed with the rules in M4.
-- **Node Exporter** — answers "is the host itself under pressure?" (CPU saturation, memory exhaustion, disk full).
-- **cAdvisor** — answers "which container is misbehaving?" (a restarting or memory-hungry container), supporting container-level investigation.
+- **Prometheus** — single place to query customer application, host, and container health; evaluates alert rules for proactive detection.
+- **Grafana** — operational overview dashboard correlating availability, database health, errors, and resource pressure.
+- **Alertmanager** — receives firing alerts from Prometheus; routing to external channels is deferred (no paid integrations).
+- **Node Exporter** — answers "is the host itself under pressure?"
+- **cAdvisor** — answers "which container is misbehaving?"
 
 ## What Prometheus scrapes
 
@@ -33,91 +33,140 @@ Milestone 3 adds a working local monitoring stack. **Alert rules and Grafana das
 | `node-exporter` | `node-exporter:9100` | Host metrics |
 | `cadvisor` | `cadvisor:8080` | Container metrics |
 
-Config: [`../monitoring/prometheus/prometheus.yml`](../monitoring/prometheus/prometheus.yml)
-Alertmanager config: [`../monitoring/alertmanager/alertmanager.yml`](../monitoring/alertmanager/alertmanager.yml)
+Config: [`../monitoring/prometheus/prometheus.yml`](../monitoring/prometheus/prometheus.yml)  
+Alert rules: [`../monitoring/prometheus/rules/managed-services-alerts.yml`](../monitoring/prometheus/rules/managed-services-alerts.yml)  
+Alertmanager: [`../monitoring/alertmanager/alertmanager.yml`](../monitoring/alertmanager/alertmanager.yml)
+
+## Custom application metric
+
+| Metric | Values | Purpose |
+|---|---|---|
+| `support_api_database_up` | `1` = database reachable, `0` = down | Drives `SupportApiDatabaseDown` alert; updated on each `/health` check |
+
+## Grafana dashboard (Milestone 4)
+
+**Title:** Managed Services Operations Overview  
+**URL:** http://localhost:13003 → Dashboards → Managed Services folder  
+**File:** [`../monitoring/grafana/dashboards/managed-services-overview.json`](../monitoring/grafana/dashboards/managed-services-overview.json)
+
+| Panel | Query | Support value |
+|---|---|---|
+| Support API Availability | `up{job="spring-support-api"}` | Is the customer app being scraped |
+| Database Health | `support_api_database_up` | Database dependency status |
+| HTTP Request Count | `sum(rate(http_server_requests_seconds_count{job="spring-support-api"}[2m]))` | Traffic level |
+| HTTP 5xx Error Rate | `sum(rate(...,status=~"5.."}[2m]))` | Customer-impacting errors |
+| API CPU Usage | `process_cpu_usage{job="spring-support-api"}` | Application CPU pressure |
+| API Container Memory | `container_memory_usage_bytes{name=~".*msol-support-api.*"}` | OOM risk |
+| Host CPU Usage | `100 - (avg(rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)` | Host saturation |
+| Container Count / Visibility | `count(container_last_seen)` | Container visibility |
+
+### Grafana provisioning
+
+Grafana loads configuration automatically on startup:
+
+- **Datasource:** `monitoring/grafana/provisioning/datasources/prometheus.yml` — Prometheus at `http://prometheus:9090` (default datasource)
+- **Dashboards:** `monitoring/grafana/provisioning/dashboards/dashboards.yml` — loads JSON from `/var/lib/grafana/dashboards`
+
+No manual datasource setup is required after `docker compose up`.
+
+## Alert rules (Milestone 4)
+
+Rules file: `monitoring/prometheus/rules/managed-services-alerts.yml`
+
+| Alert | Severity | Condition | Purpose |
+|---|---|---|---|
+| `SupportApiDown` | critical | `up{job="spring-support-api"} == 0` | Customer application unavailable |
+| `SupportApiDatabaseDown` | critical | `support_api_database_up == 0` | App running but database failing |
+| `SupportApiHighErrorRate` | warning | 5xx rate > 0 for 2m | HTTP 500 errors |
+| `SupportApiHighCpuUsage` | warning | `process_cpu_usage > 0.80` | Application CPU pressure |
+| `ContainerMemoryHigh` | warning | API container memory > 500 MB | OOM / restart risk |
+| `NodeExporterDown` | warning | `up{job="node-exporter"} == 0` | Host metrics gap |
+| `CadvisorDown` | warning | `up{job="cadvisor"} == 0` | Container metrics gap |
+
+Critical alerts include `runbook` labels linking to operational procedures (e.g. `database-down`, `application-500-errors`, `high-cpu`).
+
+View firing alerts: http://localhost:19090/alerts  
+View in Alertmanager: http://localhost:19093
 
 ## Startup checks
 
-Start (or restart) the full stack including monitoring:
-
 ```bash
-docker compose up -d
+docker compose up -d --build
 docker compose ps
 ```
 
-Confirm each monitoring UI responds:
+Confirm monitoring UIs:
 
 ```bash
-curl -s http://localhost:19090/-/ready          # Prometheus: "Prometheus Server is Ready."
-curl -s http://localhost:19093/-/ready          # Alertmanager readiness
-curl -s -o /dev/null -w "%{http_code}\n" http://localhost:13003/login   # Grafana: 200
-curl -s http://localhost:19100/metrics | head   # Node Exporter metrics
-curl -s http://localhost:18084/healthz          # cAdvisor health
+curl -s http://localhost:19090/-/ready
+curl -s http://localhost:19093/-/ready
+curl -s -o /dev/null -w "%{http_code}\n" http://localhost:13003/login
 ```
 
-Monitoring UIs:
+## Prometheus rules validation
 
-- Prometheus: http://localhost:19090
-- Grafana: http://localhost:13003 (login `admin` / `admin`)
-- Alertmanager: http://localhost:19093
+Validate config and rules before or after startup:
+
+```bash
+# Using the running Prometheus container
+docker compose exec prometheus promtool check config /etc/prometheus/prometheus.yml
+docker compose exec prometheus promtool check rules /etc/prometheus/rules/managed-services-alerts.yml
+```
+
+Confirm rules are loaded:
+
+```bash
+curl -s http://localhost:19090/api/v1/rules | jq '.data.groups[].name'
+# Expected: "managed-services-alerts"
+```
 
 ## Prometheus target check
 
-Confirm all scrape targets are healthy:
-
-1. Open http://localhost:19090/targets
-2. Every job (`prometheus`, `spring-support-api`, `node-exporter`, `cadvisor`) should show **State = UP**.
-
-From the command line:
+1. Open http://localhost:19090/targets — all jobs **UP**
+2. Open http://localhost:19090/alerts — rules listed (inactive when healthy)
+3. Query custom metric:
 
 ```bash
-# Quick check that the application metrics are being exposed
-curl -s http://localhost:18080/actuator/prometheus | head
-
-# Ask Prometheus which targets are up
-curl -s 'http://localhost:19090/api/v1/query?query=up' | jq '.data.result[] | {job:.metric.job, value:.value[1]}'
+curl -s 'http://localhost:19090/api/v1/query?query=support_api_database_up' | jq .
 ```
 
 ## Useful queries
 
-Run these in the Prometheus UI (http://localhost:19090) expression browser:
-
 | Query | What it tells a 2nd-level engineer |
 |---|---|
-| `up` | Which scrape targets are reachable (1) or down (0) |
-| `up{job="spring-support-api"}` | Is the customer application being scraped successfully |
-| `http_server_requests_seconds_count` | Request counts per endpoint/status — traffic and error visibility |
-| `process_cpu_usage` | Application process CPU usage |
-| `container_memory_usage_bytes` | Per-container memory usage (cAdvisor) |
-| `node_cpu_seconds_total` | Host CPU time by mode (Node Exporter) |
-
-## Alerting principles (applied in Milestone 4)
-
-1. **Alert on symptoms that matter to users** — availability, error rate, latency SLO breach
-2. **Include runbook links** in alert annotations
-3. **Avoid alert storms** — grouping and inhibition in Alertmanager
-4. **Tune thresholds with evidence** — see PRB-004 and CHG-002
+| `up` | Which scrape targets are reachable |
+| `up{job="spring-support-api"}` | Customer application scrape health |
+| `support_api_database_up` | Database dependency for the customer app |
+| `http_server_requests_seconds_count` | Request counts per endpoint/status |
+| `process_cpu_usage` | Application process CPU |
+| `container_memory_usage_bytes` | Per-container memory (cAdvisor) |
+| `node_cpu_seconds_total` | Host CPU time by mode |
 
 ## Investigation workflow
 
-1. Confirm scope in Prometheus (`up`, error-rate, resource queries)
-2. Separate application vs. host vs. container symptoms (app metrics vs. Node Exporter vs. cAdvisor)
+1. Alert fires in Prometheus / Alertmanager (or anomaly spotted on Grafana dashboard)
+2. Confirm scope: app vs. database vs. host vs. container
 3. Correlate with recent deployments and changes
-4. Follow the linked runbook
-5. Document findings in the incident record
+4. Follow linked runbook (`runbook` label on critical alerts)
+5. Document findings in incident record
+
+## Troubleshooting
+
+| Issue | Check |
+|---|---|
+| Rules not loaded | `docker compose logs prometheus`; run `promtool check rules` |
+| `support_api_database_up` missing | Hit `/health` once; metric updates on health check |
+| Grafana dashboard missing | Confirm provisioning mounts; restart `msol-grafana`; check logs |
+| Alerts always firing | Open http://localhost:19090/alerts; verify expression and `for` duration |
+| Dashboard panels empty | Confirm Prometheus datasource healthy; check time range (last 1h) |
 
 ## Roadmap
 
 | Item | Milestone |
 |---|---|
-| Monitoring stack (this guide) | M3 (done) |
-| Alert rules + Alertmanager routing | M4 |
-| Grafana dashboards | M4 |
-
-## Known gaps (documented)
-
-- Threshold too sensitive on CPU (PRB-004) — addressed via CHG-002
-- Missing synthetic uptime check — in service improvement backlog
+| Monitoring stack | M3 (done) |
+| Alert rules + Grafana dashboard | M4 (done) |
+| Incident simulation drills | M5 |
 
 ## Related documents
 
@@ -125,3 +174,4 @@ Run these in the Prometheus UI (http://localhost:19090) expression browser:
 - [sla-priority-matrix.md](sla-priority-matrix.md)
 - [escalation-model.md](escalation-model.md)
 - [../runbooks/high-cpu.md](../runbooks/high-cpu.md)
+- [../runbooks/database-down.md](../runbooks/database-down.md)

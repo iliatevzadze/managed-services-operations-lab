@@ -1,0 +1,73 @@
+# Managed Services Operations Lab — Prometheus alert rules (Milestone 4)
+# Alert-driven incident response for the containerized customer application stack.
+
+groups:
+  - name: managed-services-alerts
+    rules:
+      - alert: SupportApiDown
+        expr: up{job="spring-support-api"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          runbook: application-500-errors
+        annotations:
+          summary: "Support API is down"
+          description: "Prometheus cannot scrape spring-support-api. The customer application may be unavailable."
+
+      - alert: SupportApiDatabaseDown
+        expr: support_api_database_up == 0
+        for: 1m
+        labels:
+          severity: critical
+          runbook: database-down
+        annotations:
+          summary: "Support API database dependency is down"
+          description: "The application is reachable but support_api_database_up is 0. Database connectivity has failed."
+
+      - alert: SupportApiHighErrorRate
+        expr: sum(rate(http_server_requests_seconds_count{job="spring-support-api",status=~"5.."}[2m])) > 0
+        for: 2m
+        labels:
+          severity: warning
+          runbook: application-500-errors
+        annotations:
+          summary: "Support API HTTP 5xx errors detected"
+          description: "The customer application is returning HTTP 5xx responses. Investigate logs and recent changes."
+
+      - alert: SupportApiHighCpuUsage
+        expr: process_cpu_usage{job="spring-support-api"} > 0.80
+        for: 5m
+        labels:
+          severity: warning
+          runbook: high-cpu
+        annotations:
+          summary: "Support API CPU usage is high"
+          description: "Application process CPU usage exceeds 80%. Check for traffic spikes or inefficient processing."
+
+      - alert: ContainerMemoryHigh
+        expr: container_memory_usage_bytes{name=~".*msol-support-api.*"} > 500000000
+        for: 5m
+        labels:
+          severity: warning
+          runbook: container-restart
+        annotations:
+          summary: "Support API container memory usage is high"
+          description: "msol-support-api container memory exceeds 500 MB. Risk of OOMKill and restart loop."
+
+      - alert: NodeExporterDown
+        expr: up{job="node-exporter"} == 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Node Exporter is down"
+          description: "Host metrics are unavailable. Host-level investigation capability is reduced."
+
+      - alert: CadvisorDown
+        expr: up{job="cadvisor"} == 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "cAdvisor is down"
+          description: "Container metrics are unavailable. Container-level investigation capability is reduced."
