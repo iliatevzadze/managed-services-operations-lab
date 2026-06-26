@@ -1,0 +1,234 @@
+# Managed Services Operations Lab — Exxeta-Focused 2nd Level Support Simulation
+
+A portfolio project demonstrating **2nd-level Managed Services support operations thinking**: detect issues, investigate systematically, troubleshoot with evidence, identify root cause, resolve safely, document clearly, prevent recurrence, and improve service quality.
+
+---
+
+## Purpose
+
+This repository simulates the operational reality of a **Support Operations Engineer — Managed Services** role. It is not a generic DevOps showcase. It is a structured lab environment where incidents, problems, changes, monitoring, and runbooks reflect how managed services teams keep customer platforms stable under SLA pressure.
+
+The goal is to show hiring managers and technical interviewers that I can operate production-like services with discipline, traceability, and customer impact awareness.
+
+---
+
+## Why this project exists
+
+Managed Services support is judged on outcomes, not tool familiarity alone. Employers need engineers who can:
+
+- Respond to alerts without guessing
+- Separate symptoms from root cause
+- Restore service quickly and safely
+- Escalate at the right time with the right context
+- Leave behind documentation that helps the next engineer
+
+This project exists to make that workflow visible and repeatable in a GitHub portfolio.
+
+---
+
+## Exxeta role alignment
+
+This lab is intentionally aligned with **Exxeta's Support Operations Engineer — Managed Services** role (Tbilisi, Hybrid). The project reflects responsibilities commonly expected in that position:
+
+| Role expectation | How this project demonstrates it |
+|---|---|
+| 2nd-level incident handling | Documented incidents with investigation steps, commands, and resolution |
+| Monitoring and alerting | Prometheus, Grafana, Alertmanager structure and monitoring guides |
+| Linux and container operations | Docker Compose lab, container restart and deployment runbooks |
+| SQL and database troubleshooting | Database-down and slow-query runbooks, backup/restore procedures |
+| Cloud platform familiarity | AWS/Azure mapping document for hybrid managed services context |
+| ITIL-aligned operations | Incident, problem, and change records with cross-references |
+| Clear communication | Runbooks, escalation model, and employer-facing documentation |
+
+---
+
+## Managed Services scenario
+
+**Customer context:** A B2B SaaS platform ("Support Portal API") runs on containers behind a reverse proxy, backed by PostgreSQL, monitored by Prometheus/Grafana, and deployed to Kubernetes in higher environments.
+
+**Support model:** 1st level triages and gathers initial data. **2nd level** (this project's focus) investigates, troubleshoots, implements safe fixes or coordinates changes, validates recovery, and drives problem/change follow-up.
+
+**Operating principles:**
+
+1. **Detect** — Alert or ticket indicates abnormal behavior
+2. **Investigate** — Gather logs, metrics, and recent changes
+3. **Troubleshoot** — Narrow scope with evidence, not assumptions
+4. **Identify root cause** — Distinguish trigger from underlying failure
+5. **Resolve safely** — Minimize blast radius; prefer rollback when uncertain
+6. **Document clearly** — Incident record, runbook updates, handover notes
+7. **Prevent recurrence** — Problem record, permanent fix, monitoring improvement
+8. **Improve service quality** — Change management and service improvement plan
+
+---
+
+## Architecture overview
+
+```
+                    ┌─────────────┐
+                    │   Clients   │
+                    └──────┬──────┘
+                           │
+                    ┌──────▼──────┐
+                    │    Nginx    │  Reverse proxy / TLS
+                    └──────┬──────┘
+                           │
+              ┌────────────▼────────────┐
+              │   spring-support-api    │  Spring Boot application
+              └────────────┬────────────┘
+                           │
+              ┌────────────▼────────────┐
+              │      PostgreSQL         │  Primary datastore
+              └─────────────────────────┘
+
+   ┌──────────────────────────────────────────────────┐
+   │  Observability: Prometheus → Grafana             │
+   │                 Alertmanager → on-call / ticket  │
+   └──────────────────────────────────────────────────┘
+```
+
+Local lab runs via Docker Compose. Kubernetes manifests support staging/production-style scenarios in later milestones.
+
+See [docs/architecture-overview.md](docs/architecture-overview.md) for detail.
+
+---
+
+## Technology stack
+
+| Layer | Technology | Role in lab |
+|---|---|---|
+| Application | Java, Spring Boot | Simulated customer API with realistic failure modes |
+| Database | PostgreSQL | Persistence, query performance scenarios |
+| Proxy | Nginx | Routing, health checks, upstream failures |
+| Containers | Docker, Docker Compose | Local multi-service environment |
+| Orchestration | Kubernetes | Deployment, rollback, and pod restart scenarios |
+| Monitoring | Prometheus, Grafana, Alertmanager | Metrics, dashboards, alert routing |
+| Operations | Bash, SQL, Git | Investigation commands and versioned ops artifacts |
+| Cloud mapping | AWS / Azure concepts | Hybrid managed services context |
+
+---
+
+## What this project demonstrates
+
+- **Incident management** — Structured records with priority, impact, investigation, and resolution
+- **Problem management** — Root cause analysis and permanent fixes for recurring issues
+- **Change management** — Risk-assessed changes with rollback and validation plans
+- **Runbook-driven response** — Repeatable procedures for common failure modes
+- **Monitoring literacy** — Alert thresholds, dashboards, and gap identification
+- **Database operations** — Backup, restore, and query troubleshooting
+- **Safe operational judgment** — Rollback over risky fixes; evidence before action
+- **Documentation discipline** — Cross-linked incidents, problems, changes, and runbooks
+
+---
+
+## Local setup
+
+> **Milestone 0:** Repository foundation only. Application and Docker services are not yet implemented.
+
+**Prerequisites (for upcoming milestones):**
+
+- Docker and Docker Compose
+- Java 17+ and Maven (or Gradle)
+- `kubectl` (optional, for Kubernetes scenarios)
+- Git
+
+**Current state:**
+
+```bash
+git clone <repository-url>
+cd managed-services-operations-lab
+# Application and docker compose services — coming in Milestone 1+
+```
+
+See [docs/local-setup-guide.md](docs/local-setup-guide.md) for the full setup walkthrough as milestones progress.
+
+---
+
+## Planned incident simulations
+
+| ID | Scenario | Primary skill area |
+|---|---|---|
+| INC-001 | Database unavailable | DB connectivity, backup awareness, escalation |
+| INC-002 | Application HTTP 500 errors | Log analysis, recent changes, rollback decision |
+| INC-003 | Container restart loop | Health checks, resource limits, deployment validation |
+| INC-004 | High CPU on application pod | Metrics, profiling, scaling vs. fix |
+| INC-005 | Slow SQL query degrading API | Query plans, indexing, change record follow-up |
+| INC-006 | Failed deployment | Rollback, CI/CD validation, change management |
+| INC-007 | Monitoring alert threshold gap | Alert tuning, problem management |
+| INC-008 | Backup failure before maintenance | Backup/restore runbook, risk communication |
+
+Example incident records: [incidents/](incidents/)
+
+---
+
+## Documentation map
+
+| Document | Description |
+|---|---|
+| [docs/service-overview.md](docs/service-overview.md) | Service context, stakeholders, and SLA framing |
+| [docs/architecture-overview.md](docs/architecture-overview.md) | Components, data flow, and failure domains |
+| [docs/local-setup-guide.md](docs/local-setup-guide.md) | Environment setup by milestone |
+| [docs/monitoring-guide.md](docs/monitoring-guide.md) | Metrics, dashboards, and alerting approach |
+| [docs/sla-priority-matrix.md](docs/sla-priority-matrix.md) | Priority definitions and response expectations |
+| [docs/escalation-model.md](docs/escalation-model.md) | When and how to escalate |
+| [docs/incident-management-process.md](docs/incident-management-process.md) | Incident lifecycle |
+| [docs/problem-management-process.md](docs/problem-management-process.md) | Problem lifecycle and RCA |
+| [docs/change-management-process.md](docs/change-management-process.md) | Change types, approval, and validation |
+| [docs/backup-restore-guide.md](docs/backup-restore-guide.md) | Backup strategy and restore procedure |
+| [docs/service-improvement-plan.md](docs/service-improvement-plan.md) | Continuous improvement backlog |
+| [docs/aws-azure-mapping.md](docs/aws-azure-mapping.md) | Cloud service mapping for hybrid MS context |
+
+**Runbooks:** [runbooks/](runbooks/) — Operational procedures for common incidents.
+
+**Records:**
+
+- [incidents/](incidents/) — Incident examples and templates
+- [problem-records/](problem-records/) — Root cause and permanent fix tracking
+- [changes/](changes/) — Change records with rollback plans
+
+---
+
+## Milestone roadmap
+
+| Milestone | Scope | Status |
+|---|---|---|
+| **M0** | Repository foundation, README, documentation and record skeletons | **Current** |
+| M1 | Spring Boot API, PostgreSQL, Docker Compose local stack | Planned |
+| M2 | Monitoring stack (Prometheus, Grafana, Alertmanager) | Planned |
+| M3 | Nginx reverse proxy, health checks, realistic failure injection | Planned |
+| M4 | Incident simulations with working troubleshooting paths | Planned |
+| M5 | Kubernetes manifests, deployment and rollback scenarios | Planned |
+| M6 | CI/CD workflows, automated validation | Planned |
+| M7 | Service improvement and monitoring hardening | Planned |
+
+---
+
+## Future improvements
+
+- Automated incident scenario injection for repeatable drills
+- Synthetic monitoring and SLO-based alerting
+- Integration with ticketing workflow (Jira/ServiceNow-style fields)
+- On-call rotation simulation and escalation timing metrics
+- Expanded cloud-specific runbooks (EKS/AKS, RDS/Azure Database)
+- Post-incident review templates and blameless RCA format
+
+---
+
+## Resume positioning
+
+**Suggested title:** Managed Services Operations Lab — 2nd Level Support Simulation
+
+**One-liner for resume or LinkedIn:**
+
+> Built a production-style operations lab simulating 2nd-level Managed Services support: incident/problem/change management, monitoring-driven troubleshooting, database and container operations, and ITIL-aligned documentation — aligned with enterprise support engineering roles.
+
+**Talking points for interviews:**
+
+- Walk through INC-001 or INC-002: how you detected, investigated, and resolved
+- Explain the difference between incident fix and problem permanent fix (PRB-001 → CHG-001)
+- Describe when you would rollback vs. hotfix (CHG-003)
+- Show how monitoring gaps become problem records (PRB-004 → CHG-002)
+- Connect local Docker lab concepts to AWS/Azure managed services (see aws-azure-mapping.md)
+
+---
+
+*This project is a learning and portfolio artifact. It is not affiliated with or endorsed by Exxeta.*

@@ -1,0 +1,65 @@
+# Java / Maven / Gradle
+target/
+build/
+out/
+*.class
+*.jar
+*.war
+*.ear
+*.nar
+hs_err_pid*
+replay_pid*
+
+# Spring Boot
+.springBeans
+.factorypath
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+*.sublime-project
+*.sublime-workspace
+
+# OS / Linux
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
+*.temp
+*.bak
+*.orig
+
+# Docker
+.docker/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+credentials.json
+secrets/
+
+# Logs and runtime
+logs/
+*.log.*
+log/
+
+# Test and coverage
+coverage/
+*.lcov
+.jacoco/
+
+# Local data volumes
+data/
+volumes/

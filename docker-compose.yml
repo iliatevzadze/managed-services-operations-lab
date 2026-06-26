@@ -1,0 +1,19 @@
+# Managed Services Operations Lab — Docker Compose (placeholder)
+# Milestone 0: structure only. Services will be defined in later milestones.
+#
+# Planned services (not yet implemented):
+#   - spring-support-api   Application under test
+#   - postgres             Primary data store
+#   - nginx                Reverse proxy / TLS termination
+#   - prometheus           Metrics collection
+#   - grafana              Dashboards and visualization
+#   - alertmanager         Alert routing and notification
+#
+# Usage (future):
+#   docker compose up -d
+#   docker compose down
+#   docker compose logs -f <service>
+
+version: "3.9"
+
+services: {}

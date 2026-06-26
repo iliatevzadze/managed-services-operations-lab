@@ -1,0 +1,7 @@
+-- Managed Services Operations Lab — Database initialization (placeholder)
+-- Milestone 0: structure only. Schema and seed data will be added in later milestones.
+--
+-- Planned contents:
+--   - Application schema for spring-support-api
+--   - Seed data for incident simulation scenarios
+--   - Indexes and constraints aligned with performance runbooks
