@@ -225,23 +225,3 @@ Guided review path: [docs/reviewer-guide.md](docs/reviewer-guide.md) · Resume b
 | [docs/cicd-guide.md](docs/cicd-guide.md) | CI workflows and troubleshooting |
 | [docs/aws-azure-mapping.md](docs/aws-azure-mapping.md) | Cloud mapping for hybrid MS |
 | [k8s/README.md](k8s/README.md) | kind deploy, rollback, delete |
-
----
-
-## Resume positioning
-
-**Title:** Managed Services Operations Lab
-
-**Bullets:** [docs/resume-bullets.md](docs/resume-bullets.md)
-
-**Interview talking points:**
-
-- Walk INC-001: detect → investigate → restore → document
-- Explain incident fix vs. problem permanent fix (PRB-001 → CHG-001)
-- Rollback vs. hotfix decision (CHG-003)
-- Monitoring gap → problem record (PRB-004 → CHG-002)
-- Map local Docker concepts to AWS/Azure ([aws-azure-mapping.md](docs/aws-azure-mapping.md))
-
----
-
-*Portfolio learning project.*
