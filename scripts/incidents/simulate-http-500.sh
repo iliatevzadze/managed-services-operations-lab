@@ -10,7 +10,23 @@ PROJECT_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 cd "${PROJECT_ROOT}"
 
 echo "[INC-SIM] INC-002 drill: simulating HTTP 500 errors"
-echo "[INC-SIM] Sending 10 requests to http://localhost:18081/simulate/http-500"
+
+echo "[INC-SIM] Checking baseline health before simulation..."
+health_json=$(curl -sf http://localhost:18081/health) || {
+  echo "Baseline is not healthy. Restore previous incident first."
+  exit 1
+}
+
+service_status=$(echo "${health_json}" | jq -r '.status // empty')
+database_status=$(echo "${health_json}" | jq -r '.database // empty')
+
+if [[ "${service_status}" != "UP" || "${database_status}" != "UP" ]]; then
+  echo "Baseline is not healthy. Restore previous incident first."
+  echo "[INC-SIM] Current: status=${service_status}, database=${database_status}"
+  exit 1
+fi
+
+echo "[INC-SIM] Baseline healthy — sending 10 requests to http://localhost:18081/simulate/http-500"
 
 for i in $(seq 1 10); do
   code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:18081/simulate/http-500 || echo "000")

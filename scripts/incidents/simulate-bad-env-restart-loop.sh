@@ -10,6 +10,7 @@ PROJECT_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 cd "${PROJECT_ROOT}"
 
 echo "[INC-SIM] INC-003 drill: simulating bad deployment / broken environment config"
+echo "[INC-SIM] Warning: run restore-bad-env-restart-loop.sh before starting another incident."
 echo "[INC-SIM] Applying docker-compose.incident-bad-env.yml (wrong database: wrongdb)..."
 
 docker compose -f docker-compose.yml -f docker-compose.incident-bad-env.yml up -d --force-recreate spring-support-api

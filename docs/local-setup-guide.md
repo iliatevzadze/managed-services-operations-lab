@@ -166,6 +166,12 @@ docker compose down -v    # stop and remove the database volume (fresh start)
 
 **Prerequisites:** full stack running (`docker compose up -d --build`)
 
+### Simulation rules
+
+- Run **only one** incident simulation at a time.
+- Always run the matching **restore script** before starting the next simulation.
+- HTTP 500 simulation requires baseline health `status: UP` and `database: UP` — otherwise Nginx may return 502/504 instead of application HTTP 500.
+
 ### Database down (INC-001)
 
 ```bash

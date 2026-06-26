@@ -53,6 +53,12 @@ Follow [sla-priority-matrix.md](sla-priority-matrix.md). Re-assess priority as i
 
 The lab includes **controlled incident drills** for 2nd-level training. These are local-only, reversible, and do not delete volumes.
 
+### Simulation rules
+
+- Run only **one** incident simulation at a time.
+- Always run the matching **restore script** before starting the next simulation.
+- HTTP 500 simulation requires baseline health `status: UP` and `database: UP`. If a prior drill (e.g. database down) is still active, restore first — otherwise results will be misleading (Nginx 502/504 instead of application 500).
+
 ### Drill workflow
 
 ```
