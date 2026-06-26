@@ -8,6 +8,18 @@
 
 The Support Portal API is a managed service component operated under contract SLA. Downtime or severe degradation directly affects customer support teams and end-user case resolution times.
 
+## Deployment context (Milestone 2)
+
+The service now runs as a **containerized customer application** via Docker Compose: an Nginx reverse proxy fronts the Spring Boot API, which depends on a PostgreSQL database backed by a persistent volume. This is the environment 2nd-level support operates against:
+
+- **Customer entry point:** Nginx at `http://localhost:8081`
+- **Direct API access (troubleshooting):** `http://localhost:8080`
+- **Database dependency:** PostgreSQL (`msol-postgres`) with `pg_isready` health checks
+- **Operational verification:** `/health` reports application status and live database connectivity
+- **Safe backup/restore:** `database/backup.sh` and `database/restore.sh` (see [backup-restore-guide.md](backup-restore-guide.md))
+
+See [architecture-overview.md](architecture-overview.md) for the container topology and request flow.
+
 ## Service owner
 
 - **Business owner:** Customer Success / Platform Product

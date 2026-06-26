@@ -122,22 +122,40 @@ See [docs/architecture-overview.md](docs/architecture-overview.md) for detail.
 
 ## Local setup
 
-> **Milestone 1:** Validate the API with `mvn test`. Full application runtime with PostgreSQL arrives in Milestone 2 (Docker Compose).
+> **Milestone 2:** The full stack (Nginx → Spring Boot API → PostgreSQL) runs locally via Docker Compose.
 
-**Prerequisites (Milestone 1):** Java 21, Maven 3.9+, Git
+**Prerequisites:** Docker + Docker Compose (full stack), or Java 21 + Maven 3.9+ (API tests only).
 
-**Milestone 1 validation command:**
+### Run the stack (Docker Compose)
+
+```bash
+docker compose up -d --build
+docker compose ps
+```
+
+**Service URLs:**
+
+| Target | URL |
+|---|---|
+| API direct (troubleshooting) | http://localhost:8080/health |
+| Nginx proxy (customer entry point) | http://localhost:8081/health |
+| Tickets via proxy | http://localhost:8081/tickets |
+
+**Stop the stack:**
+
+```bash
+docker compose down       # keep database volume
+docker compose down -v    # remove database volume
+```
+
+### Validate the API without Docker (Milestone 1)
 
 ```bash
 cd app/spring-support-api
 mvn test
 ```
 
-`mvn test` uses H2 in PostgreSQL compatibility mode (`application-test.properties`). It does **not** require Docker or PostgreSQL.
-
-**Manual application runtime (not required for Milestone 1):**
-
-`mvn spring-boot:run` connects to PostgreSQL at `localhost:5432/supportdb` (default credentials in `application.properties`). You must supply your own PostgreSQL instance. Milestone 2 adds Docker Compose so the database and API run together without manual setup.
+`mvn test` uses H2 in PostgreSQL compatibility mode (`application-test.properties`) and does **not** require Docker or PostgreSQL.
 
 See [docs/local-setup-guide.md](docs/local-setup-guide.md) for details.
 
@@ -192,13 +210,13 @@ Example incident records: [incidents/](incidents/)
 | Milestone | Scope | Status |
 |---|---|---|
 | M0 | Repository foundation, README, documentation and record skeletons | Completed |
-| **M1** | Spring Boot support API, Flyway schema, seeded tickets, tests | **Completed** |
-| M2 | Docker Compose local stack (PostgreSQL) | Planned |
+| M1 | Spring Boot support API, Flyway schema, seeded tickets, tests | Completed |
+| **M2** | Docker Compose stack: Nginx → API → PostgreSQL, health checks, backup/restore | **Completed** |
 | M3 | Monitoring stack (Prometheus, Grafana, Alertmanager) | Planned |
-| M4 | Nginx reverse proxy, health checks, realistic failure injection | Planned |
-| M5 | Incident simulations with working troubleshooting paths | Planned |
-| M6 | Kubernetes manifests, deployment and rollback scenarios | Planned |
-| M7 | CI/CD workflows, automated validation | Planned |
+| M4 | Realistic failure injection and incident simulations | Planned |
+| M5 | Kubernetes manifests, deployment and rollback scenarios | Planned |
+| M6 | CI/CD workflows, automated validation | Planned |
+| M7 | Service improvement and monitoring hardening | Planned |
 
 ---
 

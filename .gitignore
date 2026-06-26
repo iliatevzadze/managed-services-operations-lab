@@ -41,6 +41,9 @@ Thumbs.db
 # Docker
 .docker/
 
+# Database backups (generated)
+database/backups/*.sql
+
 # Environment and secrets
 .env
 .env.*

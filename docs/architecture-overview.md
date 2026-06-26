@@ -10,6 +10,44 @@ Clients → Nginx → spring-support-api → PostgreSQL
               Prometheus / Grafana / Alertmanager
 ```
 
+## Docker Compose architecture (Milestone 2)
+
+The local stack runs as three containers on a shared `msol-net` network. This mirrors a real customer application: a reverse proxy in front, an application tier, and a database with persistent storage.
+
+```
+                Host (localhost)
+   :8081 ──────────────┐         :8080 ──────────────┐
+                       ▼                              ▼
+              ┌─────────────────┐           (direct API access
+              │   msol-nginx    │            for troubleshooting)
+              │  nginx:1.27     │                     │
+              └────────┬────────┘                     │
+                       │ proxy_pass                    │
+                       ▼                               ▼
+              ┌──────────────────────────────────────────┐
+              │           msol-support-api               │
+              │     Spring Boot 3.5 (Java 21) :8080      │
+              │     health check: GET /health            │
+              └────────────────────┬─────────────────────┘
+                                   │ JDBC
+                                   ▼
+              ┌──────────────────────────────────────────┐
+              │              msol-postgres               │
+              │     postgres:16-alpine :5432             │
+              │     health check: pg_isready             │
+              │     volume: msol-postgres-data           │
+              └──────────────────────────────────────────┘
+```
+
+**Request flow:** A client calls Nginx on `localhost:8081`. Nginx proxies to `spring-support-api:8080`, adding `Host`, `X-Real-IP`, `X-Forwarded-For`, and `X-Forwarded-Proto` headers. The API serves the request, querying PostgreSQL over JDBC at `postgres:5432`.
+
+**Operational notes (Managed Services relevance):**
+
+- **Startup ordering:** the API `depends_on` PostgreSQL passing its `pg_isready` health check, preventing connection-refused errors on boot.
+- **Direct vs. proxied access:** port `8080` exposes the API directly for 2nd-level troubleshooting; port `8081` represents the customer-facing path through Nginx. Comparing the two isolates whether a fault is in the app or the proxy.
+- **Persistence:** the named volume `msol-postgres-data` survives `docker compose down`, so data is retained between restarts unless explicitly removed with `-v`.
+- **Health checks:** each tier reports health, supporting the detect → investigate workflow.
+
 ## Components
 
 ### spring-support-api
@@ -29,7 +67,9 @@ Clients → Nginx → spring-support-api → PostgreSQL
 
 ### Nginx
 
-- **Role:** TLS termination, routing, upstream health checks
+- **Role:** Reverse proxy and customer entry point; routing, proxy headers, upstream timeouts
+- **Config:** `docker/nginx/default.conf` — proxies `/` to `spring-support-api:8080`
+- **Local ports:** `localhost:8081` → container port `80`
 - **Failure domains:** Misconfigured upstream, certificate expiry, timeout mismatches
 
 ### Observability stack

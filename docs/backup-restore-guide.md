@@ -2,42 +2,53 @@
 
 ## Scope
 
-PostgreSQL backup and restore procedures for the Support Portal API datastore.
+PostgreSQL backup and restore procedures for the Support Portal API datastore, using the Docker Compose stack from Milestone 2.
 
-> **Milestone 0:** Scripts are placeholders. Full implementation in a later milestone.
+> **Prerequisite:** the stack must be running (`docker compose up -d`) so the `postgres` service is available.
 
-## Backup strategy (planned)
+## Backup strategy
 
 | Aspect | Policy |
 |---|---|
-| Full backup | Daily at 02:00 UTC |
+| Full backup | Daily at 02:00 UTC (operational target) |
 | Retention | 30 days |
 | Storage | Encrypted off-host volume |
 | Verification | Weekly restore drill to non-production |
+
+In this lab, backups are written locally to `database/backups/` as timestamped `.sql` files. Generated backups are git-ignored.
 
 ## Backup script
 
 Location: [../database/backup.sh](../database/backup.sh)
 
-Planned behavior:
+Creates `database/backups/` if missing and writes a timestamped logical dump using `pg_dump` inside the `postgres` container.
 
 ```bash
-# Future usage (preview)
 ./database/backup.sh
-# Creates timestamped pg_dump archive
+# -> database/backups/supportdb-YYYYMMDD-HHMMSS.sql
 ```
+
+Behavior:
+
+- Fails fast (`set -euo pipefail`) if the dump cannot be produced.
+- Uses `docker compose exec -T postgres pg_dump -U supportuser supportdb`.
+- Prints the resulting backup file path.
 
 ## Restore script
 
 Location: [../database/restore.sh](../database/restore.sh)
 
-Planned behavior:
+Requires a backup file path argument and restores it into `supportdb`.
 
 ```bash
-# Future usage (preview)
-./database/restore.sh <backup-file>
-# Pre-restore confirmation and integrity check
+./database/restore.sh database/backups/supportdb-YYYYMMDD-HHMMSS.sql
 ```
+
+Behavior:
+
+- Fails fast if the argument is missing or the file does not exist.
+- Prints a warning that existing data may be overwritten; quiesce the application first.
+- Uses `docker compose exec -T postgres psql -U supportuser -d supportdb`.
 
 ## Pre-restore checklist
 

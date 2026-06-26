@@ -5,18 +5,23 @@
 | Milestone | Setup scope | Status |
 |---|---|---|
 | M0 | Clone repo, review documentation | Completed |
-| **M1** | Spring Boot API — validate with `mvn test` | **Available now** |
-| M2 | Docker Compose local stack (PostgreSQL + API runtime) | Planned |
-| M3+ | Monitoring, Nginx, failure injection, K8s | Planned |
+| M1 | Spring Boot API — validate with `mvn test` | Completed |
+| **M2** | Docker Compose stack: Nginx → API → PostgreSQL | **Available now** |
+| M3+ | Monitoring, failure injection, K8s | Planned |
 
 ## Prerequisites
 
-**Milestone 1:**
+**Milestone 2 (full stack):**
+
+- **Docker** and **Docker Compose v2**
+- **curl** and **jq** — endpoint verification
+
+**Milestone 1 (API tests only):**
 
 - **Java 21**
 - **Maven 3.9+**
 
-**Later milestones:** Docker, Docker Compose, `curl`, `jq`, `kubectl` (optional)
+**Later milestones:** `kubectl` (optional)
 
 ## Milestone 1 — validate the API
 
@@ -46,28 +51,59 @@ mvn clean package -DskipTests
 
 > H2 is for automated tests only. Do not use `spring-boot:run` with the test profile as a manual run path.
 
-## Milestone 2 — Docker Compose (preview)
+## Milestone 2 — run the full stack with Docker Compose
+
+The stack runs three containers: `msol-nginx` (reverse proxy), `msol-support-api` (Spring Boot), and `msol-postgres` (PostgreSQL with a persistent volume).
+
+### Start
 
 ```bash
-# Not yet available
-docker compose up -d
+docker compose up -d --build
 docker compose ps
-curl -s http://localhost:8080/health
 ```
 
-PostgreSQL and API runtime will be started as a single local stack.
+The API waits for PostgreSQL to pass its `pg_isready` health check before starting. First build downloads Maven dependencies and may take a few minutes.
 
-## Verification checklist (M1)
+### Verify
+
+```bash
+# API direct (bypasses proxy — for troubleshooting)
+curl -s http://localhost:8080/health | jq .
+
+# Through the Nginx reverse proxy (customer entry point)
+curl -s http://localhost:8081/health | jq .
+curl -s http://localhost:8081/tickets | jq .
+```
+
+Expected: `status: UP`, `database: UP`, and 4 seeded tickets.
+
+### Inspect
+
+```bash
+docker compose logs -f spring-support-api
+docker compose logs -f nginx
+docker compose exec postgres psql -U supportuser -d supportdb -c "SELECT count(*) FROM support_tickets;"
+```
+
+### Stop
+
+```bash
+docker compose down       # stop containers, keep database volume
+docker compose down -v    # stop and remove the database volume (fresh start)
+```
+
+## Verification checklist (M2)
+
+- [ ] `docker compose ps` shows all three containers healthy
+- [ ] `GET http://localhost:8080/health` returns `status: UP`, `database: UP`
+- [ ] `GET http://localhost:8081/health` (via Nginx) returns the same
+- [ ] `GET http://localhost:8081/tickets` returns 4 seeded tickets
+- [ ] Data persists across `docker compose down` then `up` (volume retained)
+
+## Verification checklist (M1, no Docker)
 
 - [ ] `mvn test` passes without Docker or PostgreSQL
 - [ ] Health, ticket list, and 404 tests green in Surefire output
-
-## Verification checklist (M2+)
-
-- [ ] `docker compose up -d` starts API and PostgreSQL
-- [ ] `GET /health` returns `status: UP` and `database: UP`
-- [ ] `GET /tickets` returns 4 seeded tickets
-- [ ] Prometheus targets show `UP` (Milestone 3+)
 
 ## Troubleshooting
 
@@ -75,7 +111,10 @@ PostgreSQL and API runtime will be started as a single local stack.
 |---|---|
 | `mvn` not found | Install Maven 3.9+; set `JAVA_HOME` to Java 21 |
 | Tests fail | Run `mvn clean test`; confirm `application-test.properties` exists |
-| `spring-boot:run` cannot connect to DB | Expected without PostgreSQL — use `mvn test` for M1, or wait for M2 Docker Compose |
+| API container unhealthy | `docker compose logs spring-support-api`; confirm `msol-postgres` is healthy first |
+| `database: DOWN` in `/health` | PostgreSQL not ready or wrong credentials; check `docker compose ps` and `logs postgres` |
+| Port 8080/8081/5432 in use | `ss -tlnp \| grep -E '8080\|8081\|5432'` — stop the conflicting process |
+| Stale data after schema change | `docker compose down -v` to reset the volume, then `up -d --build` |
 
 ## Related documents
 
