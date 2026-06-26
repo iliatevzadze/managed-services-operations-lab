@@ -16,7 +16,7 @@ The local stack runs as three containers on a shared `msol-net` network. This mi
 
 ```
                 Host (localhost)
-   :8081 ──────────────┐         :8080 ──────────────┐
+  :18081 ──────────────┐        :18080 ──────────────┐
                        ▼                              ▼
               ┌─────────────────┐           (direct API access
               │   msol-nginx    │            for troubleshooting)
@@ -36,15 +36,18 @@ The local stack runs as three containers on a shared `msol-net` network. This mi
               │     postgres:16-alpine :5432             │
               │     health check: pg_isready             │
               │     volume: msol-postgres-data           │
+              │     host access: localhost:15434         │
               └──────────────────────────────────────────┘
 ```
 
-**Request flow:** A client calls Nginx on `localhost:8081`. Nginx proxies to `spring-support-api:8080`, adding `Host`, `X-Real-IP`, `X-Forwarded-For`, and `X-Forwarded-Proto` headers. The API serves the request, querying PostgreSQL over JDBC at `postgres:5432`.
+Host port mappings: Nginx `localhost:18081` → `80`, API `localhost:18080` → `8080`, PostgreSQL `localhost:15434` → `5432`. Container-internal ports are unchanged.
+
+**Request flow:** A client calls Nginx on `localhost:18081`. Nginx proxies to `spring-support-api:8080`, adding `Host`, `X-Real-IP`, `X-Forwarded-For`, and `X-Forwarded-Proto` headers. The API serves the request, querying PostgreSQL over JDBC at `postgres:5432`.
 
 **Operational notes (Managed Services relevance):**
 
 - **Startup ordering:** the API `depends_on` PostgreSQL passing its `pg_isready` health check, preventing connection-refused errors on boot.
-- **Direct vs. proxied access:** port `8080` exposes the API directly for 2nd-level troubleshooting; port `8081` represents the customer-facing path through Nginx. Comparing the two isolates whether a fault is in the app or the proxy.
+- **Direct vs. proxied access:** host port `18080` exposes the API directly for 2nd-level troubleshooting; host port `18081` represents the customer-facing path through Nginx. Comparing the two isolates whether a fault is in the app or the proxy.
 - **Persistence:** the named volume `msol-postgres-data` survives `docker compose down`, so data is retained between restarts unless explicitly removed with `-v`.
 - **Health checks:** each tier reports health, supporting the detect → investigate workflow.
 
@@ -69,7 +72,7 @@ The local stack runs as three containers on a shared `msol-net` network. This mi
 
 - **Role:** Reverse proxy and customer entry point; routing, proxy headers, upstream timeouts
 - **Config:** `docker/nginx/default.conf` — proxies `/` to `spring-support-api:8080`
-- **Local ports:** `localhost:8081` → container port `80`
+- **Local ports:** `localhost:18081` → container port `80`
 - **Failure domains:** Misconfigured upstream, certificate expiry, timeout mismatches
 
 ### Observability stack
@@ -82,7 +85,7 @@ The local stack runs as three containers on a shared `msol-net` network. This mi
 
 ## Data flow
 
-1. Client request hits Nginx on port 443 (or 8080 locally).
+1. Client request hits Nginx on port 443 (or 18081 locally).
 2. Nginx forwards to healthy application instances.
 3. Application executes business logic and queries PostgreSQL.
 4. Application exposes `/health` (operations) and `/actuator/prometheus` (metrics).

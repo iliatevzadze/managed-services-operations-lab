@@ -137,9 +137,10 @@ docker compose ps
 
 | Target | URL |
 |---|---|
-| API direct (troubleshooting) | http://localhost:8080/health |
-| Nginx proxy (customer entry point) | http://localhost:8081/health |
-| Tickets via proxy | http://localhost:8081/tickets |
+| API direct (troubleshooting) | http://localhost:18080/health |
+| Nginx proxy (customer entry point) | http://localhost:18081/health |
+| Tickets via proxy | http://localhost:18081/tickets |
+| PostgreSQL host access | localhost:15434 |
 
 **Stop the stack:**
 

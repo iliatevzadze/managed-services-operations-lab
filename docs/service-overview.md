@@ -12,8 +12,9 @@ The Support Portal API is a managed service component operated under contract SL
 
 The service now runs as a **containerized customer application** via Docker Compose: an Nginx reverse proxy fronts the Spring Boot API, which depends on a PostgreSQL database backed by a persistent volume. This is the environment 2nd-level support operates against:
 
-- **Customer entry point:** Nginx at `http://localhost:8081`
-- **Direct API access (troubleshooting):** `http://localhost:8080`
+- **Customer entry point:** Nginx at `http://localhost:18081`
+- **Direct API access (troubleshooting):** `http://localhost:18080`
+- **Database host access:** `localhost:15434` (container-internal JDBC remains `postgres:5432`)
 - **Database dependency:** PostgreSQL (`msol-postgres`) with `pg_isready` health checks
 - **Operational verification:** `/health` reports application status and live database connectivity
 - **Safe backup/restore:** `database/backup.sh` and `database/restore.sh` (see [backup-restore-guide.md](backup-restore-guide.md))
@@ -28,7 +29,7 @@ See [architecture-overview.md](architecture-overview.md) for the container topol
 
 ## API overview (Milestone 1)
 
-Base path: `http://localhost:8080` (default)
+Base path (direct API host access): `http://localhost:18080`
 
 | Method | Endpoint | Purpose |
 |---|---|---|

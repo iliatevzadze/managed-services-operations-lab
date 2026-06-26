@@ -68,14 +68,16 @@ The API waits for PostgreSQL to pass its `pg_isready` health check before starti
 
 ```bash
 # API direct (bypasses proxy — for troubleshooting)
-curl -s http://localhost:8080/health | jq .
+curl -s http://localhost:18080/health | jq .
 
 # Through the Nginx reverse proxy (customer entry point)
-curl -s http://localhost:8081/health | jq .
-curl -s http://localhost:8081/tickets | jq .
+curl -s http://localhost:18081/health | jq .
+curl -s http://localhost:18081/tickets | jq .
 ```
 
 Expected: `status: UP`, `database: UP`, and 4 seeded tickets.
+
+PostgreSQL is reachable from the host at `localhost:15434` (e.g. `psql -h localhost -p 15434 -U supportuser supportdb`). Inside the Docker network the API still connects via `jdbc:postgresql://postgres:5432/supportdb`.
 
 ### Inspect
 
@@ -95,9 +97,10 @@ docker compose down -v    # stop and remove the database volume (fresh start)
 ## Verification checklist (M2)
 
 - [ ] `docker compose ps` shows all three containers healthy
-- [ ] `GET http://localhost:8080/health` returns `status: UP`, `database: UP`
-- [ ] `GET http://localhost:8081/health` (via Nginx) returns the same
-- [ ] `GET http://localhost:8081/tickets` returns 4 seeded tickets
+- [ ] `GET http://localhost:18080/health` returns `status: UP`, `database: UP`
+- [ ] `GET http://localhost:18081/health` (via Nginx) returns the same
+- [ ] `GET http://localhost:18081/tickets` returns 4 seeded tickets
+- [ ] PostgreSQL reachable from host at `localhost:15434`
 - [ ] Data persists across `docker compose down` then `up` (volume retained)
 
 ## Verification checklist (M1, no Docker)
@@ -113,7 +116,7 @@ docker compose down -v    # stop and remove the database volume (fresh start)
 | Tests fail | Run `mvn clean test`; confirm `application-test.properties` exists |
 | API container unhealthy | `docker compose logs spring-support-api`; confirm `msol-postgres` is healthy first |
 | `database: DOWN` in `/health` | PostgreSQL not ready or wrong credentials; check `docker compose ps` and `logs postgres` |
-| Port 8080/8081/5432 in use | `ss -tlnp \| grep -E '8080\|8081\|5432'` — stop the conflicting process |
+| Port 18080/18081/15434 in use | `ss -tlnp \| grep -E '18080\|18081\|15434'` — stop the conflicting process |
 | Stale data after schema change | `docker compose down -v` to reset the volume, then `up -d --build` |
 
 ## Related documents
