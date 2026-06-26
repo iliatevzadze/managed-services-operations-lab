@@ -51,6 +51,43 @@ Host port mappings: Nginx `localhost:18081` → `80`, API `localhost:18080` → 
 - **Persistence:** the named volume `msol-postgres-data` survives `docker compose down`, so data is retained between restarts unless explicitly removed with `-v`.
 - **Health checks:** each tier reports health, supporting the detect → investigate workflow.
 
+## Monitoring architecture (Milestone 3)
+
+A local monitoring stack provides **proactive customer application visibility** plus host and container metrics, so 2nd-level support can investigate before issues become outages.
+
+```
+   ┌──────────────┐   ┌───────────────┐   ┌──────────────┐
+   │ spring-      │   │ node-exporter │   │   cadvisor   │
+   │ support-api  │   │ (host metrics)│   │ (container   │
+   │ /actuator/   │   │   :9100       │   │  metrics)    │
+   │ prometheus   │   │               │   │   :8080      │
+   └──────┬───────┘   └───────┬───────┘   └──────┬───────┘
+          │ scrape            │ scrape           │ scrape
+          └───────────────────┼──────────────────┘
+                              ▼
+                    ┌───────────────────┐
+                    │    msol-prometheus │  stores time series
+                    │       :9090        │  (volume: msol-prometheus-data)
+                    └─────────┬─────────-┘
+              query           │            alerts (M4)
+        ┌───────────────────-─┤                 │
+        ▼                     │                 ▼
+┌───────────────┐            │        ┌────────────────────┐
+│  msol-grafana │            │        │ msol-alertmanager  │
+│    :3000      │◄───────────┘        │      :9093         │
+│ (dashboards   │  visualizes         │ placeholder        │
+│   in M4)      │  Prometheus data    │ receiver (M4 rules)│
+└───────────────┘                     └────────────────────┘
+```
+
+**Monitoring flow:**
+
+- **Prometheus scrapes** the customer application (`spring-support-api:8080/actuator/prometheus`), the host via **Node Exporter** (`node-exporter:9100`), and containers via **cAdvisor** (`cadvisor:8080`), plus itself.
+- **Grafana visualizes** Prometheus data (dashboards delivered in Milestone 4).
+- **Alertmanager** is wired as a Prometheus target and **will receive future alerts**; in Milestone 3 it runs a local placeholder receiver with no alert rules yet.
+
+**Why this matters for Managed Services:** separating application, host, and container signals lets the engineer quickly tell whether a customer-impacting symptom comes from the app, the machine, or a specific container — the foundation of reliable service operation. Host monitoring port mappings: Prometheus `19090→9090`, Grafana `13003→3000`, Alertmanager `19093→9093`, cAdvisor `18084→8080`, Node Exporter `19100→9100`. Container-internal ports are unchanged.
+
 ## Components
 
 ### spring-support-api
@@ -60,7 +97,7 @@ Host port mappings: Nginx `localhost:18081` → `80`, API `localhost:18080` → 
 - **Runtime:** Java 21, Spring Boot 3.5.15, Maven
 - **Persistence:** Spring Data JPA + Flyway migrations on PostgreSQL
 - **API surface:** `GET /health`, `GET /tickets`, `GET /tickets/{id}`, `POST /tickets`
-- **Observability hooks:** Spring Actuator, Micrometer Prometheus registry (endpoints ready; scrape config in Milestone 3)
+- **Observability hooks:** Spring Actuator, Micrometer Prometheus registry, scraped by Prometheus at `/actuator/prometheus` (Milestone 3)
 - **Failure domains:** Application errors, memory pressure, misconfiguration, bad deployments, database connectivity
 
 ### PostgreSQL
@@ -89,7 +126,7 @@ Host port mappings: Nginx `localhost:18081` → `80`, API `localhost:18080` → 
 2. Nginx forwards to healthy application instances.
 3. Application executes business logic and queries PostgreSQL.
 4. Application exposes `/health` (operations) and `/actuator/prometheus` (metrics).
-5. Prometheus scrapes metrics; Alertmanager fires on threshold breach (Milestone 3+).
+5. Prometheus scrapes metrics (Milestone 3); Alertmanager fires on threshold breach once rules are added (Milestone 4).
 
 ## Environment model
 

@@ -79,6 +79,30 @@ Expected: `status: UP`, `database: UP`, and 4 seeded tickets.
 
 PostgreSQL is reachable from the host at `localhost:15434` (e.g. `psql -h localhost -p 15434 -U supportuser supportdb`). Inside the Docker network the API still connects via `jdbc:postgresql://postgres:5432/supportdb`.
 
+### Monitoring (Milestone 3)
+
+`docker compose up -d` also starts the monitoring stack. Host ports:
+
+| Component | Host port | URL |
+|---|---|---|
+| Prometheus | 19090 | http://localhost:19090 |
+| Grafana | 13003 | http://localhost:13003 (login `admin` / `admin`) |
+| Alertmanager | 19093 | http://localhost:19093 |
+| Node Exporter | 19100 | http://localhost:19100/metrics |
+| cAdvisor | 18084 | http://localhost:18084 |
+
+Verify monitoring:
+
+```bash
+curl -s http://localhost:19090/-/ready                  # Prometheus ready
+curl -s http://localhost:19093/-/ready                  # Alertmanager ready
+curl -s -o /dev/null -w "%{http_code}\n" http://localhost:13003/login   # Grafana 200
+curl -s http://localhost:18080/actuator/prometheus | head   # app metrics exposed
+curl -s 'http://localhost:19090/api/v1/query?query=up' | jq '.data.result[] | {job:.metric.job, up:.value[1]}'
+```
+
+Then open http://localhost:19090/targets — every job (`prometheus`, `spring-support-api`, `node-exporter`, `cadvisor`) should be **UP**. See [monitoring-guide.md](monitoring-guide.md) for useful queries.
+
 ### Inspect
 
 ```bash
@@ -103,6 +127,14 @@ docker compose down -v    # stop and remove the database volume (fresh start)
 - [ ] PostgreSQL reachable from host at `localhost:15434`
 - [ ] Data persists across `docker compose down` then `up` (volume retained)
 
+## Verification checklist (M3, monitoring)
+
+- [ ] Prometheus UI reachable at http://localhost:19090
+- [ ] All scrape targets UP at http://localhost:19090/targets
+- [ ] Grafana login works at http://localhost:13003 (`admin` / `admin`)
+- [ ] Alertmanager UI reachable at http://localhost:19093
+- [ ] `up{job="spring-support-api"}` returns 1 in Prometheus
+
 ## Verification checklist (M1, no Docker)
 
 - [ ] `mvn test` passes without Docker or PostgreSQL
@@ -117,6 +149,8 @@ docker compose down -v    # stop and remove the database volume (fresh start)
 | API container unhealthy | `docker compose logs spring-support-api`; confirm `msol-postgres` is healthy first |
 | `database: DOWN` in `/health` | PostgreSQL not ready or wrong credentials; check `docker compose ps` and `logs postgres` |
 | Port 18080/18081/15434 in use | `ss -tlnp \| grep -E '18080\|18081\|15434'` — stop the conflicting process |
+| Monitoring port in use | `ss -tlnp \| grep -E '19090\|13003\|19093\|19100\|18084'` — stop the conflicting process |
+| Prometheus target DOWN | `docker compose logs prometheus`; confirm the target container is healthy and on `msol-net` |
 | Stale data after schema change | `docker compose down -v` to reset the volume, then `up -d --build` |
 
 ## Related documents

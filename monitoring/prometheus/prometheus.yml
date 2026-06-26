@@ -1,0 +1,38 @@
+# Managed Services Operations Lab — Prometheus configuration (Milestone 3)
+# Proactive monitoring for the containerized customer application stack.
+# Alert rules are intentionally absent here; they are added in Milestone 4.
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+# Alertmanager target is wired now; rule files come in Milestone 4.
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            - "alertmanager:9093"
+
+# rule_files: []   # Milestone 4 will add alert rules
+
+scrape_configs:
+  # Prometheus self-monitoring
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]
+
+  # Customer application — Spring Boot Actuator / Micrometer Prometheus endpoint
+  - job_name: "spring-support-api"
+    metrics_path: "/actuator/prometheus"
+    static_configs:
+      - targets: ["spring-support-api:8080"]
+
+  # Host metrics (CPU, memory, disk, network)
+  - job_name: "node-exporter"
+    static_configs:
+      - targets: ["node-exporter:9100"]
+
+  # Container metrics (per-container CPU, memory, restarts)
+  - job_name: "cadvisor"
+    static_configs:
+      - targets: ["cadvisor:8080"]

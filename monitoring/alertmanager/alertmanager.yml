@@ -1,0 +1,17 @@
+# Managed Services Operations Lab — Alertmanager configuration (Milestone 3)
+# Local placeholder only. No external email, Slack, or PagerDuty integration.
+# Real routing and receivers are defined alongside alert rules in Milestone 4.
+
+global:
+  resolve_timeout: 5m
+
+route:
+  receiver: "local-placeholder"
+  group_by: ["alertname"]
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 1h
+
+receivers:
+  # Placeholder receiver: accepts alerts but takes no external action.
+  - name: "local-placeholder"

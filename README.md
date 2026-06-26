@@ -142,11 +142,31 @@ docker compose ps
 | Tickets via proxy | http://localhost:18081/tickets |
 | PostgreSQL host access | localhost:15434 |
 
+**Monitoring URLs (Milestone 3):**
+
+| Target | URL | Notes |
+|---|---|---|
+| Prometheus | http://localhost:19090 | Metrics and target status (`/targets`) |
+| Grafana | http://localhost:13003 | Login `admin` / `admin` (dashboards in M4) |
+| Alertmanager | http://localhost:19093 | Placeholder receiver (rules in M4) |
+| Node Exporter | http://localhost:19100/metrics | Host metrics |
+| cAdvisor | http://localhost:18084 | Container metrics |
+| App metrics endpoint | http://localhost:18080/actuator/prometheus | Scraped by Prometheus |
+
+**Verify monitoring:**
+
+```bash
+docker compose ps
+curl -s http://localhost:19090/-/ready                 # Prometheus ready
+curl -s 'http://localhost:19090/api/v1/query?query=up' # all targets up
+# Then open http://localhost:19090/targets — every job should be UP
+```
+
 **Stop the stack:**
 
 ```bash
-docker compose down       # keep database volume
-docker compose down -v    # remove database volume
+docker compose down       # keep data volumes
+docker compose down -v    # remove data volumes (postgres, prometheus, grafana)
 ```
 
 ### Validate the API without Docker (Milestone 1)
@@ -212,12 +232,12 @@ Example incident records: [incidents/](incidents/)
 |---|---|---|
 | M0 | Repository foundation, README, documentation and record skeletons | Completed |
 | M1 | Spring Boot support API, Flyway schema, seeded tickets, tests | Completed |
-| **M2** | Docker Compose stack: Nginx → API → PostgreSQL, health checks, backup/restore | **Completed** |
-| M3 | Monitoring stack (Prometheus, Grafana, Alertmanager) | Planned |
-| M4 | Realistic failure injection and incident simulations | Planned |
-| M5 | Kubernetes manifests, deployment and rollback scenarios | Planned |
-| M6 | CI/CD workflows, automated validation | Planned |
-| M7 | Service improvement and monitoring hardening | Planned |
+| M2 | Docker Compose stack: Nginx → API → PostgreSQL, health checks, backup/restore | Completed |
+| **M3** | Monitoring stack: Prometheus, Grafana, Alertmanager, Node Exporter, cAdvisor | **Completed** |
+| M4 | Alert rules, Alertmanager routing, and Grafana dashboards | Planned |
+| M5 | Realistic failure injection and incident simulations | Planned |
+| M6 | Kubernetes manifests, deployment and rollback scenarios | Planned |
+| M7 | CI/CD workflows, automated validation | Planned |
 
 ---
 

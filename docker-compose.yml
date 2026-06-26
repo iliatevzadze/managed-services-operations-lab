@@ -69,9 +69,92 @@ services:
     networks:
       - msol-net
 
+  # --- Monitoring stack (Milestone 3) ---
+
+  prometheus:
+    image: prom/prometheus:v3.12.0
+    container_name: msol-prometheus
+    depends_on:
+      - spring-support-api
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+    ports:
+      - "127.0.0.1:19090:9090"
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    restart: unless-stopped
+    networks:
+      - msol-net
+
+  grafana:
+    image: grafana/grafana:13.0.2
+    container_name: msol-grafana
+    depends_on:
+      - prometheus
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    ports:
+      - "127.0.0.1:13003:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+    restart: unless-stopped
+    networks:
+      - msol-net
+
+  alertmanager:
+    image: prom/alertmanager:v0.33.0
+    container_name: msol-alertmanager
+    command:
+      - "--config.file=/etc/alertmanager/alertmanager.yml"
+    ports:
+      - "127.0.0.1:19093:9093"
+    volumes:
+      - ./monitoring/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+    restart: unless-stopped
+    networks:
+      - msol-net
+
+  node-exporter:
+    image: prom/node-exporter:v1.11.1
+    container_name: msol-node-exporter
+    command:
+      - "--path.rootfs=/host"
+    pid: host
+    ports:
+      - "127.0.0.1:19100:9100"
+    volumes:
+      - /:/host:ro,rslave
+    restart: unless-stopped
+    networks:
+      - msol-net
+
+  cadvisor:
+    image: ghcr.io/google/cadvisor:v0.60.2
+    container_name: msol-cadvisor
+    ports:
+      - "127.0.0.1:18084:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    devices:
+      - /dev/kmsg
+    restart: unless-stopped
+    networks:
+      - msol-net
+
 volumes:
   postgres-data:
     name: msol-postgres-data
+  prometheus-data:
+    name: msol-prometheus-data
+  grafana-data:
+    name: msol-grafana-data
 
 networks:
   msol-net:
