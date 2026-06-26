@@ -14,6 +14,15 @@ command -v kubectl >/dev/null 2>&1 || { echo "[K8S] ERROR: 'kubectl' not found i
 echo "[K8S] Current rollout history for ${DEPLOYMENT}:"
 kubectl -n "${NAMESPACE}" rollout history deployment/"${DEPLOYMENT}"
 
+# Count revision lines (rows that start with a revision number).
+REVISIONS="$(kubectl -n "${NAMESPACE}" rollout history deployment/"${DEPLOYMENT}" \
+  | grep -cE '^[0-9]+')"
+
+if [ "${REVISIONS}" -lt 2 ]; then
+  echo "[K8S] No previous revision available. Rollback requires at least two deployment revisions."
+  exit 0
+fi
+
 echo "[K8S] Rolling back ${DEPLOYMENT} to the previous revision ..."
 kubectl -n "${NAMESPACE}" rollout undo deployment/"${DEPLOYMENT}"
 

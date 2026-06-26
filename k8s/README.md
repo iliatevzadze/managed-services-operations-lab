@@ -91,6 +91,13 @@ the full investigation and rollback procedure.
 ```
 
 Reverts `spring-support-api` to the previous revision and waits for the rollout.
+
+> **Rollback needs at least two revisions.** It only works after at least one
+> newer deployment exists on top of the original. The **first deployment has no
+> previous revision**, so the script prints
+> `No previous revision available. Rollback requires at least two deployment revisions.`
+> and exits safely (code 0).
+
 To create a second revision to roll back from (for a drill):
 
 ```bash

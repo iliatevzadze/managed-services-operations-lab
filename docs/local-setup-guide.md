@@ -267,7 +267,7 @@ Full guide and troubleshooting commands: [../k8s/README.md](../k8s/README.md). R
 - [ ] `deploy-kind.sh` completes; both deployments reach `rollout status` ready
 - [ ] `curl http://localhost:18082/health` returns `status: UP`, `database: UP`
 - [ ] `curl http://localhost:18082/tickets` returns seeded tickets
-- [ ] `rollback-support-api.sh` reverts and re-validates health
+- [ ] `rollback-support-api.sh` reverts and re-validates health (requires ≥2 revisions; on a first deployment it reports no previous revision and exits 0)
 - [ ] `delete-kind.sh` removes the cluster (and is safe when absent)
 
 ## Verification checklist (M1, no Docker)

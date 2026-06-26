@@ -18,6 +18,12 @@
 
 > **Principle:** Rollback first, root-cause second when users are affected.
 
+> **Prerequisite:** Rollback only works once **at least two deployment revisions
+> exist** — i.e. after at least one newer deployment on top of the original.
+> The **first deployment has no previous revision**, so there is nothing to roll
+> back to. The rollback script detects this and exits safely with the message
+> `No previous revision available. Rollback requires at least two deployment revisions.`
+
 ## 1. Deployment status checks
 
 ```bash
@@ -69,6 +75,8 @@ kubectl -n $NS rollout history deployment/spring-support-api --revision=<N>
 ```
 
 Identify the last known-good revision from history and/or the change record.
+If only **one** revision is listed, there is no previous revision to roll back
+to — the deployment has not been updated since it was first created.
 
 ## 5. Rollback command
 
