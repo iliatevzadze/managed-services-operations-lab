@@ -1,0 +1,16 @@
+                                                                               QUERY PLAN                                                                                
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=4068.67..4068.74 rows=28 width=112) (actual time=7.091..7.094 rows=83 loops=1)
+   Sort Key: created_at DESC
+   Sort Method: quicksort  Memory: 37kB
+   Buffers: shared hit=1821
+   ->  Seq Scan on support_ticket_events  (cost=0.00..4068.00 rows=28 width=112) (actual time=0.163..7.030 rows=83 loops=1)
+         Filter: (((customer_name)::text = 'Summit Financial'::text) AND ((event_type)::text = 'STATUS_CHANGE'::text) AND (created_at >= (now() - '30 days'::interval)))
+         Rows Removed by Filter: 99917
+         Buffers: shared hit=1818
+ Planning:
+   Buffers: shared hit=102
+ Planning Time: 0.697 ms
+ Execution Time: 7.118 ms
+(12 rows)
+

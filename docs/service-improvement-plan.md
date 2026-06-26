@@ -8,7 +8,7 @@ Track proactive improvements that reduce incident volume, improve detection, and
 
 | ID | Improvement | Driver | Priority | Status |
 |---|---|---|---|---|
-| SI-001 | Add composite index on high-traffic query | PRB-001, CHG-001 | High | Planned |
+| SI-001 | Add composite index on ticket history search | PRB-001, CHG-001 | High | **Validated (M6 lab)** |
 | SI-002 | Tune CPU alert threshold | PRB-004, CHG-002 | Medium | Planned |
 | SI-003 | Strengthen readiness probe vs. liveness | PRB-002, CHG-005 | High | Planned |
 | SI-004 | Synthetic uptime monitoring | Monitoring gap | Medium | Backlog |
@@ -19,6 +19,16 @@ Track proactive improvements that reduce incident volume, improve detection, and
 | SI-009 | Disable simulation endpoints in production | INC-002 drill | High | **Added (M5)** |
 | SI-010 | Database dependency dashboard + alert drill cadence | INC-001 drill | Medium | **Added (M5)** |
 | SI-011 | Pre-deploy datasource validation in staging | INC-003, PRB-002 | High | **Added (M5)** |
+| SI-012 | Quarterly EXPLAIN ANALYZE review for top queries | PRB-001, M6 | High | **Added (M6)** |
+| SI-013 | Commit before/after SQL evidence for index changes | CHG-001, M6 | Medium | **Added (M6)** |
+
+## Lessons from Milestone 6 SQL investigation
+
+| Finding | Improvement |
+|---|---|
+| Sequential scan on 100k rows without composite index | Index `(customer_name, event_type, created_at DESC)` — validated in lab |
+| No EXPLAIN evidence before past index debates | Require before/after files in change records |
+| Connection pool timeouts correlate with slow scans | Monitor `pg_stat_activity` duration + pool pending count |
 
 ## Lessons from Milestone 5 incident drills
 

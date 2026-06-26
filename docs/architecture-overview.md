@@ -112,6 +112,8 @@ A local monitoring stack provides **proactive customer application visibility**,
 
 - **Role:** System of record for support portal data
 - **Failure domains:** Connection exhaustion, disk full, slow queries, backup failures
+- **Troubleshooting (M6):** `database/sql-troubleshooting/` — EXPLAIN ANALYZE workflow, index evidence, script `scripts/sql/run-slow-query-investigation.sh`
+- **Host access:** `localhost:15434` | **Internal:** `postgres:5432`
 
 ### Nginx
 

@@ -217,6 +217,26 @@ Verify alerts during drill: http://localhost:19090/alerts
 
 ---
 
+## SQL troubleshooting (Milestone 6)
+
+2nd-level support workflow for **slow ticket history search** — investigate with evidence, apply index fix, validate improvement.
+
+```bash
+docker compose up -d
+./scripts/sql/run-slow-query-investigation.sh
+```
+
+**Evidence files (portfolio):**
+
+| Phase | File |
+|---|---|
+| Before index | `database/sql-troubleshooting/evidence/before-index-explain.txt` |
+| After index | `database/sql-troubleshooting/evidence/after-index-explain.txt` |
+
+Related: [PRB-001](problem-records/PRB-001-recurring-database-timeout.md), [CHG-001](changes/CHG-001-add-sql-index.md), [runbooks/slow-sql-query.md](runbooks/slow-sql-query.md)
+
+---
+
 ## Planned incident simulations
 
 | ID | Scenario | Status |
@@ -225,7 +245,7 @@ Verify alerts during drill: http://localhost:19090/alerts
 | INC-002 | Application HTTP 500 errors | **Drill available (M5)** |
 | INC-003 | Container restart loop / bad config | **Drill available (M5)** |
 | INC-004 | High CPU on application pod | Planned (M6+) |
-| INC-005 | Slow SQL query degrading API | Planned (M6) |
+| INC-005 | Slow SQL query degrading API | **Investigation available (M6)** |
 | INC-006 | Failed deployment | Partially covered by INC-003 drill |
 | INC-007 | Monitoring alert threshold gap | Documented (PRB-004) |
 | INC-008 | Backup failure before maintenance | Documented |
@@ -270,8 +290,8 @@ Example incident records: [incidents/](incidents/)
 | M2 | Docker Compose stack: Nginx → API → PostgreSQL, health checks, backup/restore | Completed |
 | **M3** | Monitoring stack: Prometheus, Grafana, Alertmanager, Node Exporter, cAdvisor | Completed |
 | **M4** | Prometheus alert rules, Grafana dashboard, `support_api_database_up` metric | Completed |
-| **M5** | Controlled incident simulations, drill scripts, documented INC-001–003 | **Completed** |
-| M6 | SQL troubleshooting scenarios | Planned |
+| **M5** | Controlled incident simulations, drill scripts, documented INC-001–003 | Completed |
+| **M6** | SQL troubleshooting: EXPLAIN ANALYZE, index fix, evidence files | **Completed** |
 | M7 | Kubernetes manifests, deployment and rollback scenarios | Planned |
 | M8 | CI/CD workflows, automated validation | Planned |
 

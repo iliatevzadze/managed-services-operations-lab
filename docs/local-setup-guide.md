@@ -9,8 +9,9 @@
 | **M2** | Docker Compose stack: Nginx → API → PostgreSQL | Completed |
 | **M3** | Monitoring stack: Prometheus, Grafana, exporters | Completed |
 | **M4** | Alert rules, Grafana dashboard, database health metric | Completed |
-| **M5** | Controlled incident simulations and drill scripts | **Available now** |
-| M6+ | SQL troubleshooting, K8s, CI/CD | Planned |
+| **M5** | Controlled incident simulations and drill scripts | Completed |
+| **M6** | SQL troubleshooting: EXPLAIN ANALYZE, index evidence | **Available now** |
+| M7+ | Kubernetes, CI/CD | Planned |
 
 ## Prerequisites
 
@@ -204,6 +205,34 @@ docker compose ps   # msol-support-api unhealthy
 - [ ] Restore scripts return stack to healthy state
 - [ ] Incident records INC-001–003 match commands used in drill
 - [ ] Alerts visible at http://localhost:19090/alerts during drill
+
+## Milestone 6 — SQL slow query investigation
+
+**Prerequisites:** full stack running (`docker compose up -d`)
+
+```bash
+./scripts/sql/run-slow-query-investigation.sh
+```
+
+The script creates demo table `support_ticket_events` (~100k rows), runs `EXPLAIN ANALYZE` before and after index fix, and saves evidence to:
+
+- `database/sql-troubleshooting/evidence/before-index-explain.txt`
+- `database/sql-troubleshooting/evidence/after-index-explain.txt`
+
+Optional cleanup:
+
+```bash
+docker compose exec -T postgres psql -U supportuser -d supportdb \
+  < database/sql-troubleshooting/05-cleanup-slow-query-demo.sql
+```
+
+## Verification checklist (M6)
+
+- [ ] Script completes without error
+- [ ] Before evidence shows sequential scan
+- [ ] After evidence shows index scan on `idx_support_ticket_events_customer_event_created`
+- [ ] Execution time improved in after vs before
+- [ ] PRB-001 and CHG-001 reference evidence paths
 
 ## Verification checklist (M1, no Docker)
 
