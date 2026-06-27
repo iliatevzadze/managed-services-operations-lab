@@ -30,7 +30,7 @@ A local portfolio lab demonstrating my ability to operate and troubleshoot a pro
 ## Quick start
 
 ```bash
-git clone <repo-url> && cd managed-services-operations-lab
+git clone <my-repo-url> && cd managed-services-operations-lab
 
 # Full stack (app + monitoring)
 docker compose up -d --build
